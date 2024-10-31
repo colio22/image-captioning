@@ -62,3 +62,13 @@ def main(args):
     cider_train = Cider(PTBTokenizer.tokenize(ref_caps_train))
     dict_dataset_val = val_dataset.image_dictionary({'image': image_field, 'text': RawField()})
     dict_dataset_test = test_dataset.image_dictionary({'image': image_field, 'text': RawField()})
+
+    dataloader_train = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers,
+                                      drop_last=True)
+    dataloader_val = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)
+    dict_dataloader_train = DataLoader(dict_dataset_train, batch_size=args.batch_size // 5, shuffle=True,
+                                       num_workers=args.workers)
+    dict_dataloader_val = DataLoader(dict_dataset_val, batch_size=args.batch_size // 5)
+    dict_dataloader_test = DataLoader(dict_dataset_test, batch_size=args.batch_size // 5)
+
+    print(dataloader_train)

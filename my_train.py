@@ -2,7 +2,7 @@ import argparse
 import torch
 import pickle
 import os
-from common.data.field import ImageDetectionsField, TextField
+from common.data.field import ImageDetectionsField, TextField, RawField
 from common.data import COCODataset, DataLoader
 from common.train import train
 from common.utils.utils import create_dataset

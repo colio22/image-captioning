@@ -1,7 +1,7 @@
 import argparse
 import torch
 from common.data.field import ImageDetectionsField, TextField
-from common.data import COCO, DataLoader
+from common.data import COCODataset, DataLoader
 from common.train import train
 from common.utils.utils import create_dataset
 from common.evaluation import PTBTokenizer, Cider
@@ -46,7 +46,7 @@ def main(args):
                            
 
     # Create the dataset
-    dataset = COCO(image_field, text_field, 'coco/images/', args.annotation_folder, args.annotation_folder)
+    dataset = COCODataset(image_field, text_field, 'coco/images/', args.annotation_folder, args.annotation_folder)
     train_dataset, val_dataset, test_dataset = dataset.splits
 
     if not os.path.isfile('vocab_%s.pkl' % args.exp_name):

@@ -36,7 +36,6 @@ def parse_args():
 
 def main(args):
     device = torch.device('cuda')
-    args = parse_args()
     print("Image Captioning Project")
 
     image_field = ImageDetectionsField(detections_path=args.features_path, max_detections=50, load_in_tmp=False)
@@ -72,3 +71,8 @@ def main(args):
     dict_dataloader_test = DataLoader(dict_dataset_test, batch_size=args.batch_size // 5)
 
     print(dataloader_train)
+
+if __name__ == "__main__":
+    args = parse_args()
+    main(args)
+    

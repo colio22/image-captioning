@@ -7,6 +7,7 @@ from common.data import COCODataset, DataLoader
 from common.train import train
 from common.utils.utils import create_dataset
 from common.evaluation import PTBTokenizer, Cider
+from model.encoder import GlobalEnhancedEncoder
 # from models import build_encoder, build_decoder, Transformer
 
 
@@ -74,6 +75,8 @@ def main(args):
     dict_dataloader_test = DataLoader(dict_dataset_test, batch_size=args.batch_size // 5)
 
     print(dataloader_train)
+
+    encoder = GlobalEnhancedEncoder(3, 64, 512, 64, 8, 0.1)
 
 if __name__ == "__main__":
     args = parse_args()

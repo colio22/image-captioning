@@ -41,7 +41,7 @@ class SelfAttention(nn.Module):
         return out
     
 class MultiHeadSelfAttention(nn.Module):
-    def __init__(self, d_in, d_k, d_v, num_heads):
+    def __init__(self, d_in, d_k, d_v, num_heads, mask=None):
         super(MultiHeadSelfAttention, self).__init__()
         # Save input parmeters
         self.d_in = d_in

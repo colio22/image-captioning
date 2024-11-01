@@ -1,7 +1,7 @@
 from torch.nn import functional as F
 import torch
 from torch import nn
-from attention import MultiHeadSelfAttention
+from model.attention import MultiHeadSelfAttention
 import TensorFlow as tf
 
 class GlobalEncoderLayer(nn.Module):

@@ -12,7 +12,6 @@ class GlobalEncoderLayer(nn.Module):
         self.d_k=d_k
         self.d_v=d_v
         self.num_heads=num_heads
-        self.d_ff=d_ff
 
         self.att_layer = MultiHeadSelfAttention(d_model, d_k, d_v, num_heads, mask)
         self.ff_layer = nn.Linear(d_model, d_model)

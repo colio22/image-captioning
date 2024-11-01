@@ -2,7 +2,7 @@ from torch.nn import functional as F
 import torch
 from torch import nn
 from model.attention import MultiHeadSelfAttention
-import TensorFlow as tf
+import tensorflow as tf
 
 class GlobalEncoderLayer(nn.Module):
     def __init__(self, d_model=512, d_k =64, d_v=64, num_heads=8, drop=0.1, mask=None):

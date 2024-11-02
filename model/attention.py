@@ -31,14 +31,24 @@ class SelfAttention(nn.Module):
         score = torch.bmm(weights, V)
         return score, weights
 
-    def forward(self, X, mask=None):
+    def forward(self, X, mask=None, K=None, V=None):
         # Connect layers in network
         q = self.q_layer(X)   # Connect input to Queries
-        k = self.k_layer(X)   # Connect input to Keys
-        v = self.v_layer(X)   # Connect input to Values
+
+        if self.K != None:
+            k = self.k_layer(X)   # Connect input to Keys
+        else:
+            k = self.K
+
+        if self.V != None:
+            v = self.v_layer(X)   # Connect input to Values
+        else:
+            v = self.V
+
         # Use existing self-attention function to attend output
         out, weight = self.attention_score(q, k, v, mask)
         return out
+
     
 class MultiHeadSelfAttention(nn.Module):
     def __init__(self, d_in, d_k, d_v, num_heads, mask=None):
@@ -50,17 +60,17 @@ class MultiHeadSelfAttention(nn.Module):
         self.num_heads = num_heads
 
         # Save attention heads as ModuleList for dynamic layer usage
-        self.heads = nn.ModuleList([SelfAttention(d_in, int(d_k/num_heads), int(d_v/num_heads)) for i in range(num_heads)])
+        self.heads = nn.ModuleList([SelfAttention(d_in, int(d_k/num_heads), int(d_v/num_heads), K=self.K, V=self.V) for i in range(num_heads)])
         # Create fully-connected, linear output layer
         self.out = nn.Linear(d_v, d_v)
 
-    def forward(self, X, mask=None):
+    def forward(self, X, mask=None, K=None, V=None):
         # Create empty tensor for concatenated attention head outputs
         outputs = torch.zeros(32, 10, 0)
         # Loop through each attention head layer
         for l in self.heads:
           # Concatenate output of layer with previous outputs
-          outputs = torch.cat((outputs, l.forward(X, mask)), -1)
+          outputs = torch.cat((outputs, l.forward(X, mask, K, V)), -1)
         # Pass concatenated matrix through fully-connected output layer
         outputs = self.out(outputs)
         return outputs

@@ -7,8 +7,7 @@ from common.data import COCODataset, DataLoader
 from common.train import train
 from common.utils.utils import create_dataset
 from common.evaluation import PTBTokenizer, Cider
-from model.encoder import GlobalEnhancedEncoder
-from model.decoder import GlobalAdaptiveDecoder
+from model.transformer import GlobalEnhancedTransformer
 # from models import build_encoder, build_decoder, Transformer
 
 
@@ -77,8 +76,7 @@ def main(args):
 
     print(dataloader_train)
 
-    encoder = GlobalEnhancedEncoder(3, 64, 512, 64, 8, 0.1)
-    decoder = GlobalAdaptiveDecoder(3, 64, 512, 64, 8, 0.1)
+    model = GlobalEnhancedTransformer(len(text_field.vocab), 54, 64, 512, 64, 8, 3, 0.1)
 
 if __name__ == "__main__":
     args = parse_args()

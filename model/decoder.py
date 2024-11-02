@@ -4,7 +4,7 @@ from torch import nn
 from model.attention import MultiHeadSelfAttention, MultiHeadCrossAttention
 
 class DecoderLayer(nn.Module):
-    def __init__(self, d_model, d_k, d_v, num_heads, drop):
+    def __init__(self, d_model, d_k, d_v, num_heads, drop, mask=None):
         super(DecoderLayer, self).__init__()
         self.d_model = d_model
         self.d_k = d_k

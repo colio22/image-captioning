@@ -1,7 +1,7 @@
 from torch.nn import functional as F
 import torch
 from torch import nn
-from attention import MultiHeadSelfAttention, MultiHeadCrossAttention
+from model.attention import MultiHeadSelfAttention, MultiHeadCrossAttention
 
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, d_k, d_v, num_heads, drop):

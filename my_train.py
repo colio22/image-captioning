@@ -15,7 +15,7 @@ from model.transformer import GlobalEnhancedTransformer
 device = torch.device('cuda')
 
 
-def train(model, loss_fn, optimizer, train_loader, epoch=0, text_field):
+def train(model, loss_fn, optimizer, train_loader, text_field, epoch=0):
     model.train()  # Set model to training mode
     train_loss = []         # Empty list to add loss of each batch
     n = len(train_loader)   # Number of samples
@@ -103,7 +103,6 @@ def main(args):
     print(dataloader_train)
 
     model = GlobalEnhancedTransformer(len(text_field.vocab), 54, 64, 512, 64, 8, 3, 0.1)
-    model = model.to(device)
 
     optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
     criterion = nn.NLLLoss(ignore_index=text_field.vocab.stoi['<pad>'])
@@ -111,7 +110,7 @@ def main(args):
     max_epoch = 3
 
     for epoch in range(1, max_epoch+1):
-        loss = train(model, criterion, optim, dataloader_train, epoch)
+        loss = train(model, criterion, optim, dataloader_train, text_field, epoch)
 
     print(f'===Loss: {loss}')
 

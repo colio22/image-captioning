@@ -1,5 +1,7 @@
 import argparse
 import torch
+from torch import nn
+from torch.optim import Adam
 import pickle
 import os
 from common.data.field import ImageDetectionsField, TextField, RawField
@@ -10,6 +12,31 @@ from common.evaluation import PTBTokenizer, Cider
 from model.transformer import GlobalEnhancedTransformer
 # from models import build_encoder, build_decoder, Transformer
 
+device = torch.device('cuda')
+
+
+def train(model, loss_fn, optimizer, train_loader, epoch=0, text_field):
+    model.train()  # Set model to training mode
+    train_loss = []         # Empty list to add loss of each batch
+    n = len(train_loader)   # Number of samples
+    print_idx = int(n/10)   # Sample interval at which to print loss progress
+    # Begin training
+    for batch_idx, (img, target) in enumerate(train_loader):
+        # Place data tensors on GPU
+        img = img.to(device)
+        target = target.to(device)
+        optimizer.zero_grad()  # Initialize gradients to 0
+        output = model(img, target)    # Put input batch through model
+        captions = target[:, 1:].contiguous()
+        output = output[:, :-1].continuous()
+        loss = loss_fn(output.view(-1, len(text_field.vocab)), captions.view(-1))   # Calculate loss
+        loss.backward()        # Update weights
+        optimizer.step()
+        if batch_idx % print_idx == 0: # Log output 10 times per epoch
+            print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}]') 
+        # train_loss.append(loss.item()) # Add loss of batch to list
+        
+    return train_loss
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Dual Transformer')
@@ -38,7 +65,6 @@ def parse_args():
 
 
 def main(args):
-    device = torch.device('cuda')
     print("Image Captioning Project")
     print(args.features_path)
 
@@ -77,6 +103,17 @@ def main(args):
     print(dataloader_train)
 
     model = GlobalEnhancedTransformer(len(text_field.vocab), 54, 64, 512, 64, 8, 3, 0.1)
+    model = model.to(device)
+
+    optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
+    criterion = nn.NLLLoss(ignore_index=text_field.vocab.stoi['<pad>'])
+
+    max_epoch = 3
+
+    for epoch in range(1, max_epoch+1):
+        loss = train(model, criterion, optim, dataloader_train, epoch)
+
+    print(f'===Loss: {loss}')
 
 if __name__ == "__main__":
     args = parse_args()

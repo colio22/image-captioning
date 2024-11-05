@@ -46,6 +46,7 @@ class GlobalEnhancedEncoder(nn.Module):
         g = torch.rand(1, self.d_model)
         for l, e in zip(self.lstm_layers, self.encode_layers):
             index = torch.tensor([len(x)-1], device=x.device)  # Create index tensor on the same device as x
+            index = index.unsqueeze(1)
             g_in = torch.gather(x, 0, index)  # Use 0 for the dim argument
             g = torch.cat((g, g_in) -1)
             g = l.forward(g)

@@ -45,7 +45,7 @@ class GlobalEnhancedEncoder(nn.Module):
         intermediates = []
         g = torch.rand(1, self.d_model)
         for l, e in zip(self.lstm_layers, self.encode_layers):
-            g_in = tf.gather(x, [len(x)-1], axis=0)
+            g_in = torch.gather(x, [len(x)-1], axis=0)
             g = torch.cat((g, g_in) -1)
             g = l.forward(g)
             x = e.forward(x)

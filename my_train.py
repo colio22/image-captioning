@@ -1,5 +1,6 @@
 import argparse
 import torch
+import torchvision
 from torch import nn
 from torch.optim import Adam
 import pickle
@@ -68,51 +69,64 @@ def main(args):
     print("Image Captioning Project")
     print(args.features_path)
 
-    image_field = ImageDetectionsField(detections_path=args.features_path, max_detections=50, load_in_tmp=False)
+    #image_field = ImageDetectionsField(detections_path=args.features_path, max_detections=50, load_in_tmp=False)
 
-    text_field = TextField(init_token='<bos>', eos_token='<eos>', lower=True, tokenize='spacy',
-                           remove_punctuation=True, nopoints=False)
+    #text_field = TextField(init_token='<bos>', eos_token='<eos>', lower=True, tokenize='spacy',
+    #                       remove_punctuation=True, nopoints=False)
                            
 
     # Create the dataset
-    dataset = COCODataset(image_field, text_field, 'coco/images/', args.annotation_folder, args.annotation_folder)
-    train_dataset, val_dataset, test_dataset = dataset.splits
+    # dataset = COCODataset(image_field, text_field, 'coco/images/', args.annotation_folder, args.annotation_folder)
+    transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
+    train_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_train2014.json', transform)
+    test_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_val2014.json', transform)
 
-    if not os.path.isfile('vocab_%s.pkl' % args.exp_name):
-        print("Building vocabulary")
-        text_field.build_vocab(train_dataset, val_dataset, min_freq=5)
-        pickle.dump(text_field.vocab, open('vocab_%s.pkl' % args.exp_name, 'wb'))
-    else:
-        text_field.vocab = pickle.load(open('vocab_%s.pkl' % args.exp_name, 'rb'))
+    print(train_dataset)
+
+    batch_size_train = args.batch_size
+    batch_size_test = 1000
+
+    train_loader = torch.utils.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
+    test_loader = torch.utils.DataLoader(test_dataset, batch_size=batch_size_test, shuffle=False)
+
+    print(train_loader)
+
+    #vocab_path = 'cache/vocab.pkl'
+    #if not os.path.isfile(vocab_path):
+    #    print("Building vocabulary")
+    #    text_field.build_vocab(train_dataset, val_dataset, min_freq=5)
+    #    pickle.dump(text_field.vocab, open(vocab_path, 'wb'))
+    #else:
+    #    text_field.vocab = pickle.load(open(vocab_path, 'rb'))
 
 
-    dict_dataset_train = train_dataset.image_dictionary({'image': image_field, 'text': RawField()})
-    ref_caps_train = list(train_dataset.text)
+    # dict_dataset_train = train_dataset.image_dictionary({'image': image_field, 'text': RawField()})
+    # ref_caps_train = list(train_dataset.text)
     # cider_train = Cider(PTBTokenizer.tokenize(ref_caps_train))
-    dict_dataset_val = val_dataset.image_dictionary({'image': image_field, 'text': RawField()})
-    dict_dataset_test = test_dataset.image_dictionary({'image': image_field, 'text': RawField()})
-
-    dataloader_train = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers,
-                                      drop_last=True)
-    dataloader_val = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)
-    dict_dataloader_train = DataLoader(dict_dataset_train, batch_size=args.batch_size // 5, shuffle=True,
-                                       num_workers=args.workers)
-    dict_dataloader_val = DataLoader(dict_dataset_val, batch_size=args.batch_size // 5)
-    dict_dataloader_test = DataLoader(dict_dataset_test, batch_size=args.batch_size // 5)
-
-    print(dataloader_train)
-
-    model = GlobalEnhancedTransformer(len(text_field.vocab), 54, 64, 512, 64, 8, 3, 0.1)
-
-    optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
-    criterion = nn.NLLLoss(ignore_index=text_field.vocab.stoi['<pad>'])
-
-    max_epoch = 3
-
-    for epoch in range(1, max_epoch+1):
-        loss = train(model, criterion, optim, dataloader_train, text_field, epoch)
-
-    print(f'===Loss: {loss}')
+    # dict_dataset_val = val_dataset.image_dictionary({'image': image_field, 'text': RawField()})
+    # dict_dataset_test = test_dataset.image_dictionary({'image': image_field, 'text': RawField()})
+# 
+    # dataloader_train = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers,
+                                    #   drop_last=True)
+    # dataloader_val = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)
+    # dict_dataloader_train = DataLoader(dict_dataset_train, batch_size=args.batch_size // 5, shuffle=True,
+                                    #    num_workers=args.workers)
+    # dict_dataloader_val = DataLoader(dict_dataset_val, batch_size=args.batch_size // 5)
+    # dict_dataloader_test = DataLoader(dict_dataset_test, batch_size=args.batch_size // 5)
+# 
+    # print(dataloader_train)
+# 
+    # model = GlobalEnhancedTransformer(len(text_field.vocab), 54, 64, 512, 64, 8, 3, 0.1)
+# 
+    # optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
+    # criterion = nn.NLLLoss(ignore_index=text_field.vocab.stoi['<pad>'])
+# 
+    # max_epoch = 3
+# 
+    # for epoch in range(1, max_epoch+1):
+        # loss = train(model, criterion, optim, dataloader_train, text_field, epoch)
+# 
+    # print(f'===Loss: {loss}')
 
 if __name__ == "__main__":
     args = parse_args()

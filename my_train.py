@@ -5,12 +5,13 @@ from torch import nn
 from torch.optim import Adam
 import pickle
 import os
-from common.data.field import ImageDetectionsField, TextField, RawField
-from common.data import COCODataset, DataLoader
-from common.train import train
-from common.utils.utils import create_dataset
-from common.evaluation import PTBTokenizer, Cider
-from model.transformer import GlobalEnhancedTransformer
+from data.dataset import COCODataset
+# from common.data.field import ImageDetectionsField, TextField, RawField
+# from common.data import COCODataset, DataLoader
+# from common.train import train
+# from common.utils.utils import create_dataset
+# from common.evaluation import PTBTokenizer, Cider
+# from model.transformer import GlobalEnhancedTransformer
 # from models import build_encoder, build_decoder, Transformer
 
 device = torch.device('cuda')

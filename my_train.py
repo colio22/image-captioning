@@ -87,8 +87,8 @@ def main(args):
     batch_size_train = args.batch_size
     batch_size_test = 1000
 
-    train_loader = torch.utils.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
-    test_loader = torch.utils.DataLoader(test_dataset, batch_size=batch_size_test, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size_test, shuffle=False)
 
     print(train_loader)
 

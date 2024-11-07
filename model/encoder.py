@@ -13,7 +13,7 @@ class GlobalEncoderLayer(nn.Module):
         self.num_heads=num_heads    # Number of attention heads
 
         # Layers per encoder
-        self.att_layer = MultiHeadSelfAttention(d_model, d_k, d_v, num_heads, mask)
+        self.att_layer = MultiHeadSelfAttention(d_model, d_k, d_v, num_heads)
         self.ff_layer = nn.Linear(d_model, d_model)
         self.dropout = nn.Dropout(drop)
         self.norm = nn.LayerNorm(d_model)
@@ -61,6 +61,7 @@ class GlobalEnhancedEncoder(nn.Module):
             # Pass total input to next encoder layer
             x = e.forward(x, mask)
 
+        # Final LSTM block
         g = self.final_lstm(g)
         return x, g
     

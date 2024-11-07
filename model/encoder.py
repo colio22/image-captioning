@@ -38,7 +38,7 @@ class GlobalEnhancedEncoder(nn.Module):
         # Encoder Layers
         self.encode_layers = nn.ModuleList([GlobalEncoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(num_layers)])
         # LSTM Blocks for global memory
-        self.lstm_layers = nn.ModuleList([nn.LSTM(input_size=d_model*2, hidden_size=d_model) for i in range(num_layers)])
+        self.lstm_layers = nn.ModuleList([nn.LSTM(input_size=d_model*2, hidden_size=d_model, num_layers=2) for i in range(num_layers)])
         # Output LSTM block
         self.final_lstm = nn.LSTM(input_size=d_model*2, hidden_size=d_model, num_layers=2)
 

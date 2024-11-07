@@ -43,7 +43,7 @@ class GlobalEnhancedEncoder(nn.Module):
         self.final_lstm = nn.LSTM(input_size=d_model*2, hidden_size=d_model)
 
     def forward(self, x, mask=None):
-        g = torch.rand(1, self.d_model, device=x.device) # Initialize LSTM with random global feature
+        g = torch.rand([50, 1, self.d_model], device=x.device) # Initialize LSTM with random global feature
         
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):

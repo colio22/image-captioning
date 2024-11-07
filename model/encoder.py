@@ -57,7 +57,7 @@ class GlobalEnhancedEncoder(nn.Module):
             g = torch.cat((g, g_in), -1)
 
             # Pass global feature to next layer LSTM
-            g = l.forward(g)
+            g = l.forward(g.type(torch.float32))
             # Pass total input to next encoder layer
             x = e.forward(x, mask)
 

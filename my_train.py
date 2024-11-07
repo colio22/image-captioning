@@ -28,8 +28,9 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         # Place data tensors on GPU
         img = img.to(device)
         tokens = tokenizer(target, padding=True, truncation=True, return_tensors='pt')
-        token_ids = tokens['input_ids'].to(device)
-        padding_mask = tokens['attention_mask'].to(device)
+        token_ids = tokens['input_ids']
+        token_ids = token_ids.to(device)
+        # padding_mask = tokens['attention_mask'].to(device)
 
         optimizer.zero_grad()  # Initialize gradients to 0
         output = model(img, token_ids)    # Put input batch through model
@@ -48,7 +49,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Dual Transformer')
     parser.add_argument('--output', type=str, default='DualModel')
     parser.add_argument('--exp_name', type=str, default='dft')
-    parser.add_argument('--device', type=str, default='cuda:0')
+    parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--batch_size', type=int, default=20)
     parser.add_argument('--workers', type=int, default=8)
 

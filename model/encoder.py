@@ -51,7 +51,7 @@ class GlobalEnhancedEncoder(nn.Module):
             # Isolate global feature to feed into LSTM
             # index = torch.ones([50, 1, self.d_model], device=x.device)
             index = torch.ones([50, 1, self.d_model])
-            index = len(x)*index
+            index = (len(x)-1)*index
             print(f'=== Input tensor: {x.shape}. Index tensor: {index.shape}')
             g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
 

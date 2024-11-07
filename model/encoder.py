@@ -7,12 +7,12 @@ import tensorflow as tf
 class GlobalEncoderLayer(nn.Module):
     def __init__(self, d_model=512, d_k =64, d_v=64, num_heads=8, drop=0.1, mask=None):
         super(GlobalEncoderLayer, self).__init__()
+        self.d_model=d_model        # Feature dimension
+        self.d_k=d_k                # Key and Query attnetion dimension
+        self.d_v=d_v                # Value attention dimension
+        self.num_heads=num_heads    # Number of attention heads
 
-        self.d_model=d_model
-        self.d_k=d_k
-        self.d_v=d_v
-        self.num_heads=num_heads
-
+        # 
         self.att_layer = MultiHeadSelfAttention(d_model, d_k, d_v, num_heads, mask)
         self.ff_layer = nn.Linear(d_model, d_model)
         self.dropout = nn.Dropout(drop)

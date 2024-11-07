@@ -45,6 +45,8 @@ class COCODataset(Dataset):
         if self.transform != None:
             feature = self.transform(feature)
 
+        print(feature.shape)
+
         f.close()
 
         return feature, caption

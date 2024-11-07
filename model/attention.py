@@ -31,6 +31,34 @@ class SelfAttention(nn.Module):
         score = torch.bmm(weights, V)
         return score, weights
 
+    def attention_score(Q, K, V, mask=None):
+        """
+        Computes scaled dot-product attention.
+        Parameters:
+        Q (torch.Tensor): Query matrix of shape (batch_size, num_heads, seq_len, d_k)
+        K (torch.Tensor): Key matrix of shape (batch_size, num_heads, seq_len, d_k)
+        V (torch.Tensor): Value matrix of shape (batch_size, num_heads, seq_len, d_v)
+        mask (torch.Tensor): Optional attention mask of shape (batch_size, 1, 1, seq_len)
+        Returns:
+        torch.Tensor: The attention output of shape (batch_size, num_heads, seq_len, d_v)
+        """
+
+        d_k = Q.size(-1)
+
+        # Batch multiply Q and K and then scale
+        qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)
+
+        if mask != None:  # If mask provided
+            # Replace all values masked with False with -infinity
+            # Pytorch documentation of masked_fill revealed need to flip mask with logical_n
+            qk = qk.masked_fill(mask.logical_not(), -np.inf)
+
+        # Apply softmax to QK matrix
+        weights = torch.softmax(qk, -1)
+        # Multiply with V
+        score = torch.bmm(weights, V)
+        return score, weights
+
     def forward(self, X, mask=None):
         # Connect layers in network
         q = self.q_layer(X.float())   # Connect input to Queries

@@ -45,7 +45,7 @@ class COCODataset(Dataset):
         if self.transform != None:
             feature = self.transform(feature)
 
-        print(feature.shape)
+        feature = torch.squeeze(feature)
 
         f.close()
 

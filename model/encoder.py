@@ -40,11 +40,14 @@ class GlobalEnhancedEncoder(nn.Module):
         # LSTM Blocks for global memory
         self.lstm_layers = nn.ModuleList([nn.LSTM(input_size=d_model*2, hidden_size=d_model) for i in range(num_layers)])
         # Output LSTM block
-        self.final_lstm = nn.LSTM(input_size=d_model*2, hidden_size=d_model)
+        self.final_lstm = nn.LSTM(input_size=d_model*2, hidden_size=d_model, num_layers=2)
 
     def forward(self, x, mask=None):
         g = torch.rand([50, 1, self.d_model], device=x.device) # Initialize LSTM with random global feature
         # g = torch.rand([50, 1, self.d_model]) # Initialize LSTM with random global feature
+
+        h = torch.zeros([50, 2, self.d_model], device=x.device)
+        c = torch.zeros([50, 2, self.d_model], device=x.device)
         
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):
@@ -59,12 +62,12 @@ class GlobalEnhancedEncoder(nn.Module):
             g = torch.cat((g, g_in), -1)
 
             # Pass global feature to next layer LSTM
-            g = l.forward(g.type(torch.float32))
+            g, (h, c) = l.forward(g.type(torch.float32), (h, c))
             # Pass total input to next encoder layer
             x = e.forward(x, mask)
 
         # Final LSTM block
-        g = self.final_lstm(g)
+        g, (h, c) = self.final_lstm(g, (h,c))
         return x, g
     
             

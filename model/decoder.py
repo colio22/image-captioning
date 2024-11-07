@@ -20,7 +20,7 @@ class DecoderLayer(nn.Module):
 
     def forward(self, x, K, V, g, mask=None):
         x = self.self_att(x, mask)           # In: seq_len x d_k. Out: seq_len x d_v
-        x = self.cross_att(x, K, V, g, mask)
+        x = self.cross_att(x, K, V, g, mask) # In: seq_len x d_k. Out: seq_len x d_v
 
         return x
 

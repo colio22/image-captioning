@@ -33,9 +33,9 @@ class SelfAttention(nn.Module):
 
     def forward(self, X, mask=None):
         # Connect layers in network
-        q = self.q_layer(X.long())   # Connect input to Queries
-        k = self.k_layer(X.long())   # Connect input to Keys
-        v = self.v_layer(X.long())   # Connect input to Values
+        q = self.q_layer(X.float())   # Connect input to Queries
+        k = self.k_layer(X.float())   # Connect input to Keys
+        v = self.v_layer(X.float())   # Connect input to Values
 
         # Use existing self-attention function to attend output
         out, weight = self.attention_score(q, k, v, mask)

@@ -18,7 +18,7 @@ from model.transformer import GlobalEnhancedTransformer
 device = torch.device('cuda')
 
 
-def train(model, loss_fn, optimizer, train_loader, text_field, epoch=0):
+def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
     model.train()  # Set model to training mode
     train_loss = []         # Empty list to add loss of each batch
     n = len(train_loader)   # Number of samples
@@ -32,7 +32,7 @@ def train(model, loss_fn, optimizer, train_loader, text_field, epoch=0):
         output = model(img, target)    # Put input batch through model
         captions = target[:, 1:].contiguous()
         output = output[:, :-1].continuous()
-        loss = loss_fn(output.view(-1, len(text_field.vocab)), captions.view(-1))   # Calculate loss
+        loss = loss_fn(output.view(-1, tokenizer.vocab_size), captions.view(-1))   # Calculate loss
         loss.backward()        # Update weights
         optimizer.step()
         if batch_idx % print_idx == 0: # Log output 10 times per epoch
@@ -124,12 +124,12 @@ def main(args):
     model = GlobalEnhancedTransformer(vocab_size, 54, 2048, 512, 2048, 8, 3, 0.1)
 
     optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
-    criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['<pad>'])
+    criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['PAD'])
 
     max_epoch = 3
 
     for epoch in range(1, max_epoch+1):
-        loss = train(model, criterion, optim, dataloader_train, text_field, epoch)
+        loss = train(model, criterion, optim, train_loader, tokenizer, epoch)
 
     print(f'===Loss: {loss}')
 

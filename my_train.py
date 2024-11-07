@@ -124,7 +124,7 @@ def main(args):
     model = GlobalEnhancedTransformer(vocab_size, 54, 2048, 512, 2048, 8, 3, 0.1)
 
     optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
-    criterion = nn.NLLLoss(ignore_index=tokenizer.vocab.stoi['<pad>'])
+    criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['<pad>'])
 
     max_epoch = 3
 

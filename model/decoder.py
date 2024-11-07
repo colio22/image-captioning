@@ -7,13 +7,15 @@ from common.models.transformer import sinusoid_encoding_table
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, d_k, d_v, num_heads, drop):
         super(DecoderLayer, self).__init__()
-        self.d_model = d_model
-        self.d_k = d_k
-        self.d_v = d_v
-        self.num_heads = num_heads
-        self.drop = drop
+        self.d_model = d_model      # Size of features
+        self.d_k = d_k              # Query and Key attention dims
+        self.d_v = d_v              # Value attention dim
+        self.num_heads = num_heads  # Number of attention heads
+        self.drop = drop            # Dropout percentage
 
+        # Layer for standard multi head attention
         self.self_att = MultiHeadSelfAttention(d_model, d_k, d_v, num_heads, None)
+        # Layer for global cross attention
         self.cross_att = MultiHeadCrossAttention(d_model, d_k, d_v, num_heads, None)
 
     def forward(self, x, K, V, g, mask=None):

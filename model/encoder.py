@@ -48,7 +48,7 @@ class GlobalEnhancedEncoder(nn.Module):
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):
             # Isolate global feature to feed into LSTM
-            index = torch.ones([1, self.d_model], device=x.device)
+            index = torch.ones([50, 1, self.d_model], device=x.device)
             index = len(x)*index
             print(f'=== Input tensor: {x.shape}. Index tensor: {index.shape}')
             g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument

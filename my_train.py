@@ -123,6 +123,8 @@ def main(args):
     # dict_dataloader_test = DataLoader(dict_dataset_test, batch_size=args.batch_size // 5)
 # 
     # print(dataloader_train)
+
+    torch.cuda.empty_cache()
  
     model = GlobalEnhancedTransformer(vocab_size, 54, 2048, 512, 2048, 8, 3, 0.1)
     model = model.to(device)

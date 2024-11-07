@@ -5,7 +5,7 @@ from model.attention import MultiHeadSelfAttention
 import tensorflow as tf
 
 class GlobalEncoderLayer(nn.Module):
-    def __init__(self, d_model=512, d_k =64, d_v=64, num_heads=8, drop=0.1, mask=None):
+    def __init__(self, d_model=512, d_k =64, d_v=64, num_heads=8, drop=0.1):
         super(GlobalEncoderLayer, self).__init__()
         self.d_model=d_model        # Feature dimension
         self.d_k=d_k                # Key and Query attnetion dimension
@@ -18,8 +18,8 @@ class GlobalEncoderLayer(nn.Module):
         self.dropout = nn.Dropout(drop)
         self.norm = nn.LayerNorm(d_model)
 
-    def forward(self, x):
-        x = self.att_layer(x)       # In: seq_length x d_k. Out: seq_len x d_v
+    def forward(self, x, mask=None):
+        x = self.att_layer(x, mask)       # In: seq_length x d_k. Out: seq_len x d_v
         x = self.ff_layer(x)        # In: seq_len x d_v. Out: seq_len x d_v
         x = self.norm(F.relu(x))    # Normalize and activate
 
@@ -36,24 +36,30 @@ class GlobalEnhancedEncoder(nn.Module):
         self.drop = drop                # Percent to drop out
 
         # Encoder Layers
-        self.encode_layers = nn.ModuleList([GlobalEncoderLayer(d_model, d_k, d_v, num_heads, drop, self.mask) for i in range(num_layers)])
+        self.encode_layers = nn.ModuleList([GlobalEncoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(num_layers)])
         # LSTM Blocks for global memory
         self.lstm_layers = nn.ModuleList([nn.LSTM(input_size=d_model*2, hidden_size=d_model) for i in range(num_layers)])
         # Output LSTM block
         self.final_lstm = nn.LSTM(input_size=d_model*2, hidden_size=d_model)
 
-    def forward(self, x):
+    def forward(self, x, mask=None):
         g = torch.rand(1, self.d_model) # Initialize LSTM with random global feature
         
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):
+            # Isolate global feature to feed into LSTM
             index = torch.ones([1, self.d_model], device=x.device)
             index = len(x)*index
             print(f'=== Input tensor: {x.shape}. Index tensor: {index.shape}')
             g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
+
+            # Concatenate with output of last LSTM layer to feed to next block
             g = torch.cat((g, g_in) -1)
+
+            # Pass global feature to next layer LSTM
             g = l.forward(g)
-            x = e.forward(x)
+            # Pass total input to next encoder layer
+            x = e.forward(x, mask)
 
         g = self.final_lstm(g)
         return x, g

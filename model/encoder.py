@@ -12,14 +12,14 @@ class GlobalEncoderLayer(nn.Module):
         self.d_v=d_v                # Value attention dimension
         self.num_heads=num_heads    # Number of attention heads
 
-        # 
+        # Layers per encoder
         self.att_layer = MultiHeadSelfAttention(d_model, d_k, d_v, num_heads, mask)
         self.ff_layer = nn.Linear(d_model, d_model)
         self.dropout = nn.Dropout(drop)
         self.norm = nn.LayerNorm(d_model)
 
     def forward(self, x):
-        x = self.att_layer(x)
+        x = self.att_layer(x)       # In: Lxd
         x = self.ff_layer(x)
         x = self.norm(F.relu(x))
 

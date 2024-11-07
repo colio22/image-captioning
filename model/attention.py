@@ -31,7 +31,7 @@ class SelfAttention(nn.Module):
         score = torch.bmm(weights, V)
         return score, weights
 
-    def attention_score(Q, K, V, mask=None):
+    def attention_score(self, Q, K, V, mask=None):
         """
         Computes scaled dot-product attention.
         Parameters:

@@ -6,12 +6,13 @@ from torch.optim import Adam
 import pickle
 import os
 from data.dataset import COCODataset
+from transformers import AutoTokenizer
 # from common.data.field import ImageDetectionsField, TextField, RawField
 # from common.data import COCODataset, DataLoader
 # from common.train import train
 # from common.utils.utils import create_dataset
 # from common.evaluation import PTBTokenizer, Cider
-# from model.transformer import GlobalEnhancedTransformer
+from model.transformer import GlobalEnhancedTransformer
 # from models import build_encoder, build_decoder, Transformer
 
 device = torch.device('cuda')
@@ -92,12 +93,15 @@ def main(args):
 
     print(train_loader)
 
-    #vocab_path = 'cache/vocab.pkl'
-    #if not os.path.isfile(vocab_path):
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+    vocab_size = tokenizer.vocab_size
+
+    # vocab_path = 'cache/vocab.pkl'
+    # if not os.path.isfile(vocab_path):
     #    print("Building vocabulary")
     #    text_field.build_vocab(train_dataset, val_dataset, min_freq=5)
     #    pickle.dump(text_field.vocab, open(vocab_path, 'wb'))
-    #else:
+    # else:
     #    text_field.vocab = pickle.load(open(vocab_path, 'rb'))
 
 
@@ -117,7 +121,7 @@ def main(args):
 # 
     # print(dataloader_train)
 # 
-    # model = GlobalEnhancedTransformer(len(text_field.vocab), 54, 64, 512, 64, 8, 3, 0.1)
+    model = GlobalEnhancedTransformer(vocab_size, 54, 64, 512, 64, 8, 3, 0.1)
 # 
     # optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
     # criterion = nn.NLLLoss(ignore_index=text_field.vocab.stoi['<pad>'])

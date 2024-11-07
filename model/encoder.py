@@ -46,8 +46,8 @@ class GlobalEnhancedEncoder(nn.Module):
         g = torch.rand([50, 1, self.d_model], device=x.device) # Initialize LSTM with random global feature
         # g = torch.rand([50, 1, self.d_model]) # Initialize LSTM with random global feature
 
-        h = torch.zeros([50, 2, self.d_model], device=x.device)
-        c = torch.zeros([50, 2, self.d_model], device=x.device)
+        h = torch.zeros([2, 50, self.d_model], device=x.device)
+        c = torch.zeros([2, 50, self.d_model], device=x.device)
         
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):

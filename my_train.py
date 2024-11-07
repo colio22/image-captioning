@@ -120,18 +120,18 @@ def main(args):
     # dict_dataloader_test = DataLoader(dict_dataset_test, batch_size=args.batch_size // 5)
 # 
     # print(dataloader_train)
-# 
-    model = GlobalEnhancedTransformer(vocab_size, 54, 64, 512, 64, 8, 3, 0.1)
-# 
-    # optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
-    # criterion = nn.NLLLoss(ignore_index=text_field.vocab.stoi['<pad>'])
-# 
-    # max_epoch = 3
-# 
-    # for epoch in range(1, max_epoch+1):
-        # loss = train(model, criterion, optim, dataloader_train, text_field, epoch)
-# 
-    # print(f'===Loss: {loss}')
+ 
+    model = GlobalEnhancedTransformer(vocab_size, 54, 2048, 512, 2048, 8, 3, 0.1)
+
+    optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
+    criterion = nn.NLLLoss(ignore_index=tokenizer.vocab.stoi['<pad>'])
+
+    max_epoch = 3
+
+    for epoch in range(1, max_epoch+1):
+        loss = train(model, criterion, optim, dataloader_train, text_field, epoch)
+
+    print(f'===Loss: {loss}')
 
 if __name__ == "__main__":
     args = parse_args()

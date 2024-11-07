@@ -6,10 +6,11 @@ import h5py
 
 
 class COCODataset(Dataset):
-    def __init__(self, detection_path, annotation_file, transform=None):
+    def __init__(self, detection_path, annotation_file, transform=None, max_detections=50):
         self.detection_path = detection_path
         self.annotation_file = annotation_file
         self.transform = transform
+        self.max_detections = max_detections
         super(COCODataset, self).__init__()
 
         # f = h5py.File(self.detections_path, 'r')
@@ -34,6 +35,12 @@ class COCODataset(Dataset):
         feature_id = self.data[idx]
         feature = f[f'{feature_id}_features'][()]
         caption = self.targets[idx]
+
+        if feature.shape[0] < self.max_detections:
+            padding = np.zeros((self.max_detections - feature.shape[0], feature.shape[1]))
+            feature = np.concatenate([feature, padding])
+        else:
+            feature = feature[:self.max_detections]
 
         if self.transform != None:
             feature = self.transform(feature)

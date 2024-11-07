@@ -31,6 +31,8 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         token_ids = tokens['input_ids'].to(device)
         padding_mask = tokens['attention_mask'].to(device)
 
+        print(padding_mask)
+
         optimizer.zero_grad()  # Initialize gradients to 0
         output = model(img, token_ids)    # Put input batch through model
         # captions = target[:, 1:].contiguous()

@@ -5,7 +5,7 @@ from model.attention import MultiHeadSelfAttention, MultiHeadCrossAttention
 from common.models.transformer import sinusoid_encoding_table
 
 class DecoderLayer(nn.Module):
-    def __init__(self, d_model, d_k, d_v, num_heads, drop, mask=None):
+    def __init__(self, d_model, d_k, d_v, num_heads, drop):
         super(DecoderLayer, self).__init__()
         self.d_model = d_model
         self.d_k = d_k
@@ -16,9 +16,9 @@ class DecoderLayer(nn.Module):
         self.self_att = MultiHeadSelfAttention(d_model, d_k, d_v, num_heads, None)
         self.cross_att = MultiHeadCrossAttention(d_model, d_k, d_v, num_heads, None)
 
-    def forward(self, x, K, V, g):
-        x = self.self_att(x)
-        x = self.cross_att(x, K, V, g)
+    def forward(self, x, K, V, g, mask=None):
+        x = self.self_att(x, mask)
+        x = self.cross_att(x, K, V, g, mask)
 
         return x
 
@@ -36,14 +36,12 @@ class GlobalAdaptiveDecoder(nn.Module):
         self.num_heads = num_heads
         self.drop = drop
 
-        self.mask = None  # Need to re-evaluate this...
-
-        self.decode_layers = nn.ModuleList([DecoderLayer(d_model, d_k, d_v, num_heads, drop, self.mask) for i in range(self.num_layers)])
+        self.decode_layers = nn.ModuleList([DecoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(self.num_layers)])
         self.ffn = nn.Linear(d_model, d_model)
         self.word_emb = nn.Embedding(vocab_size, d_model, padding_idx=padding)
         self.pos_enc = nn.Embedding.from_pretrained(sinusoid_encoding_table(max_len+1, d_model, 0), freeze=True)
 
-    def forward(self, x, K, V, g):
+    def forward(self, x, K, V, g, mask=None):
         b_s, seq_len = input.shape[:2]
         seq = torch.arange(1, seq_len + 1).view(1, -1).expand(b_s, -1).to(input.device)  # (b_s, seq_len)
 

@@ -20,9 +20,13 @@ class GlobalEnhancedTransformer(nn.Module):
         self.encoder = GlobalEnhancedEncoder(num_layers, d_model, d_k, d_v, num_heads, drop)
         self.decoder = GlobalAdaptiveDecoder(vocab_size, max_len, 0, num_layers, d_model, d_k, d_v, num_heads, drop)
 
-    def forward(self, img, seq):
-        img_out, g =  self.encoder(img)
-        seq_out = self.decoder(seq, img_out, img_out, g)
+    def forward(self, img, seq, mask=None):
+        x = torch.sum(img, dim=0)
+        num_padding = len(x) - len(torch.nonzero(x))
+        x = x / (len(x) - num_padding)
+        x = torch.cat([img, x])
+        img_out, g =  self.encoder(x)
+        seq_out = self.decoder(seq, img_out, img_out, g, mask)
 
         return seq_out
         

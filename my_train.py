@@ -26,10 +26,10 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
     # Begin training
     for batch_idx, (img, target) in enumerate(train_loader):
         # Place data tensors on GPU
-        img = img.to(device)
+        # img = img.to(device)
         tokens = tokenizer(target, padding=True, truncation=True, return_tensors='pt')
         token_ids = tokens['input_ids']
-        token_ids = token_ids.to(device)
+        # token_ids = token_ids.to(device)
         # padding_mask = tokens['attention_mask'].to(device)
 
         optimizer.zero_grad()  # Initialize gradients to 0
@@ -128,7 +128,7 @@ def main(args):
     torch.cuda.empty_cache()
  
     model = GlobalEnhancedTransformer(vocab_size, 54, 2048, 512, 2048, 8, 3, 0.1)
-    model = model.to(device)
+    # model = model.to(device)
 
     optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
     criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['[PAD]'])

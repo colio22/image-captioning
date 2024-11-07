@@ -27,12 +27,15 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
     for batch_idx, (img, target) in enumerate(train_loader):
         # Place data tensors on GPU
         img = img.to(device)
-        target = target.to(device)
+        tokens = tokenizer(target, padding=True, truncation=True, return_tensors='pt')
+        token_ids = tokens['input_ids'].to(device)
+        padding_mask = tokens['attention_mask'].to(device)
+
         optimizer.zero_grad()  # Initialize gradients to 0
-        output = model(img, target)    # Put input batch through model
-        captions = target[:, 1:].contiguous()
-        output = output[:, :-1].continuous()
-        loss = loss_fn(output.view(-1, tokenizer.vocab_size), captions.view(-1))   # Calculate loss
+        output = model(img, token_ids)    # Put input batch through model
+        # captions = target[:, 1:].contiguous()
+        # output = output[:, :-1].continuous()
+        loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
         loss.backward()        # Update weights
         optimizer.step()
         if batch_idx % print_idx == 0: # Log output 10 times per epoch

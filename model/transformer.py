@@ -23,11 +23,17 @@ class GlobalEnhancedTransformer(nn.Module):
         self.decoder = GlobalAdaptiveDecoder(vocab_size, max_len, 0, num_layers, d_model, d_k, d_v, num_heads, drop)
 
     def forward(self, img, seq, mask=None):
+        # Create global feature composite of all other features
         x = torch.sum(img, -2)
         print(f'==== Feature dim: {img.shape}. Sum dim: {x.shape}')
+        # Normalize by the number of non-padding feature vectors
         num_padding = len(x) - len(torch.nonzero(x))
         g = x / (len(x) - num_padding)
-        v = torch.cat([img, g])
+
+        # Add global feature to list of features
+        v = torch.cat((img, g), -2)
+
+        # Proceed with transformer
         img_out, g_out =  self.encoder(v)
         seq_out = self.decoder(seq, img_out, img_out, g_out, mask)
 

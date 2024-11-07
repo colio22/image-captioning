@@ -19,21 +19,21 @@ class GlobalEncoderLayer(nn.Module):
         self.norm = nn.LayerNorm(d_model)
 
     def forward(self, x):
-        x = self.att_layer(x)       # In: Lxd
-        x = self.ff_layer(x)
-        x = self.norm(F.relu(x))
+        x = self.att_layer(x)       # In: seq_length x d_k. Out: seq_len x d_v
+        x = self.ff_layer(x)        # In: seq_len x d_v. Out: seq_len x d_v
+        x = self.norm(F.relu(x))    # Normalize and activate
 
         return x
     
 class GlobalEnhancedEncoder(nn.Module):
     def __init__(self, num_layers, d_model, d_k, d_v, num_heads, drop):
         super(GlobalEnhancedEncoder, self).__init__()
-        self.num_layers = num_layers
-        self.d_model = d_model
-        self.d_k = d_k
-        self.d_v = d_v
-        self.num_heads = num_heads
-        self.drop = drop
+        self.num_layers = num_layers    # Number of encoder layers
+        self.d_model = d_model          # Feature size
+        self.d_k = d_k                  # Query and Key attention dims
+        self.d_v = d_v                  # Value attention dims
+        self.num_heads = num_heads      # Number of attention heads
+        self.drop = drop                # Percent to drop out
 
         self.mask = None   # Not sure if necessary or not...
 
@@ -47,7 +47,7 @@ class GlobalEnhancedEncoder(nn.Module):
         for l, e in zip(self.lstm_layers, self.encode_layers):
             index = torch.ones([1, self.d_model], device=x.device)
             index = len(x)*index
-            g_in = torch.gather(x, 0, index)  # Use 0 for the dim argument
+            g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
             g = torch.cat((g, g_in) -1)
             g = l.forward(g)
             x = e.forward(x)

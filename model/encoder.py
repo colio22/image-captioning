@@ -54,7 +54,7 @@ class GlobalEnhancedEncoder(nn.Module):
             g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
 
             # Concatenate with output of last LSTM layer to feed to next block
-            g = torch.cat((g, g_in) -1)
+            g = torch.cat((g, g_in), -1)
 
             # Pass global feature to next layer LSTM
             g = l.forward(g)

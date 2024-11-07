@@ -19,7 +19,7 @@ class DecoderLayer(nn.Module):
         self.cross_att = MultiHeadCrossAttention(d_model, d_k, d_v, num_heads, None)
 
     def forward(self, x, K, V, g, mask=None):
-        x = self.self_att(x, mask)
+        x = self.self_att(x, mask)           # In: seq_len x d_k. Out: seq_len x d_v
         x = self.cross_att(x, K, V, g, mask)
 
         return x

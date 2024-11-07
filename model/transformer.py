@@ -31,7 +31,7 @@ class GlobalEnhancedTransformer(nn.Module):
         g = x / (len(x) - num_padding)
 
         # Add global feature to list of features
-        v = torch.cat((img, g), -2)
+        v = torch.cat((img, g.unsqueeze(1)), -2)
 
         # Proceed with transformer
         img_out, g_out =  self.encoder(v)

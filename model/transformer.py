@@ -23,7 +23,7 @@ class GlobalEnhancedTransformer(nn.Module):
         self.decoder = GlobalAdaptiveDecoder(vocab_size, max_len, 0, num_layers, d_model, d_k, d_v, num_heads, drop)
 
     def forward(self, img, seq, mask=None):
-        x = torch.sum(img, -1)
+        x = torch.sum(img, -2)
         print(f'==== Feature dim: {img.shape}. Sum dim: {x.shape}')
         num_padding = len(x) - len(torch.nonzero(x))
         g = x / (len(x) - num_padding)

@@ -86,6 +86,7 @@ def test(model: nn.Module,
     return test_stat
 
 def generate_test_strings(model, data, tokenizer):
+    print("Generating Captions for each test image to prepare for metric evaluation")
     model.eval()
     caption_map = {}
 
@@ -114,6 +115,7 @@ def generate_test_strings(model, data, tokenizer):
                 caption_map[f'{id}'] = pred_text
 
 def evaluate(generations, references):
+    print("Evaluating CIDEr...")
     cider_eval = Cider()
     cider_score, _ = cider_eval.compute_score(references, generations)
     print(f"CIDEr Score: {cider_score}")

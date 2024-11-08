@@ -22,7 +22,7 @@ class GlobalEnhancedTransformer(nn.Module):
         # Decoder Block
         self.decoder = GlobalAdaptiveDecoder(vocab_size, max_len, 0, num_layers, d_model, d_k, d_v, num_heads, drop)
 
-    def forward(self, img, seq, mask=None):
+    def forward(self, img, seq):
         # Create global feature composite of all other features
         x = torch.sum(img, dim=1)
         print(f'==== Feature dim: {img.shape}. Sum dim: {x.shape}')
@@ -35,7 +35,7 @@ class GlobalEnhancedTransformer(nn.Module):
 
         # Proceed with transformer
         img_out, g_out =  self.encoder(v)
-        seq_out = self.decoder(seq, img_out, img_out, g_out, mask)
+        seq_out = self.decoder(seq, img_out, img_out, g_out)
 
         return seq_out
         

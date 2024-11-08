@@ -30,10 +30,10 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         tokens = tokenizer(target, padding=True, truncation=True, return_tensors='pt')
         token_ids = tokens['input_ids']
         token_ids = token_ids.to(device)
-        mask = tokens['attention_mask'].to(device)
+        # mask = tokens['attention_mask'].to(device)
 
         optimizer.zero_grad()  # Initialize gradients to 0
-        output = model(img, token_ids, mask)    # Put input batch through model
+        output = model(img, token_ids)    # Put input batch through model
         # captions = target[:, 1:].contiguous()
         # output = output[:, :-1].continuous()
         loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss

@@ -97,6 +97,7 @@ def generate_test_strings(model, data, tokenizer):
                 predictions = [101*torch.ones([1,1], device=device).long()]
                 for i in range(50):
                     input_tokens = torch.cat(predictions, 1).to(device)
+                    print(f'Input Toks: {input_tokens.shape}. Enc Out: {enc_output.shape}. G: {g_out.shape}')
                     pred = model.decoder(input_tokens, enc_output, enc_output, g_out, batch_size=1)
                     predictions.append(pred)
                     if pred.item() == 102:

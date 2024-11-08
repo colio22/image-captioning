@@ -43,6 +43,7 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
             print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}]') 
         # train_loss.append(loss.item()) # Add loss of batch to list
         
+        break # Break after one iteration for dev work
     return train_loss
 
 def parse_args():

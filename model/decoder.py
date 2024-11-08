@@ -19,9 +19,9 @@ class DecoderLayer(nn.Module):
         # Layer for global cross attention
         self.cross_att = MultiHeadCrossAttention(d_model, d_k, d_v, num_heads, None)
 
-    def forward(self, x, K, V, g, mask=None):
-        x = self.self_att(x, mask)           # In: seq_len x d_k. Out: seq_len x d_v
-        x = self.cross_att(x, K, V, g) # In: seq_len x d_k. Out: seq_len x d_v
+    def forward(self, x, K, V, g, batch_size, mask=None):
+        x = self.self_att(x, batch_size, mask)           # In: seq_len x d_k. Out: seq_len x d_v
+        x = self.cross_att(x, K, V, g, batch_size) # In: seq_len x d_k. Out: seq_len x d_v
 
         return x
 
@@ -74,7 +74,7 @@ class GlobalAdaptiveDecoder(nn.Module):
               mask[i][j] = True
         return mask
 
-    def forward(self, x, K, V, g):
+    def forward(self, x, K, V, g, batch_size):
         # Embed and encode word sequence
         out = self.word_emb(x) + self.get_positional_encoding(self.d_model, x.size(1), x.device)
         # Create a mask to prevent things from the future
@@ -82,7 +82,7 @@ class GlobalAdaptiveDecoder(nn.Module):
 
         # Pass sequence and encoder results through each decode layer
         for l in self.decode_layers:
-            out = l.forward(out, K, V, g, mask)
+            out = l.forward(out, K, V, g, batch_size, mask)
 
         # Activate output with fully connected layer
         out = torch.softmax(self.ffn(out), -1)

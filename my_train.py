@@ -17,6 +17,7 @@ from pycocoevalcap.cider.cider import Cider
 # from models import build_encoder, build_decoder, Transformer
 
 device = torch.device('cuda')
+batch_size = 50
 
 
 def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
@@ -34,7 +35,7 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         # mask = tokens['attention_mask'].to(device)
 
         optimizer.zero_grad()  # Initialize gradients to 0
-        output = model(img, token_ids)    # Put input batch through model
+        output = model(img, token_ids, batch_size)    # Put input batch through model
         # captions = target[:, 1:].contiguous()
         # output = output[:, :-1].continuous()
         loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
@@ -66,7 +67,7 @@ def test(model: nn.Module,
             token_ids = tokens['input_ids']
             token_ids = token_ids.to(device)
 
-            output = model(images, token_ids)   # Put batch through model
+            output = model(images, token_ids, batch_size)   # Put batch through model
             loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
             test_loss += loss.item()
             # test_loss += loss_fn(output, targets).item() # Add loss to total
@@ -92,11 +93,11 @@ def generate_test_strings(model, data, tokenizer):
         for features, targets, ids in data:
             features = features.to(device)
             for feature, id in zip(features, ids):
-                enc_output, g_out = model.encoder(feature)   # Put batch through model
+                enc_output, g_out = model.encoder(feature, batch_size=1)   # Put batch through model
                 predictions = [101*torch.ones([1,1], device=device).long()]
                 input_tokens = [101*torch.ones([1,1], device=device).long()]
                 for i in range(50):
-                    pred = model.decoder(input_tokens, enc_output, enc_output, g_out)
+                    pred = model.decoder(input_tokens, enc_output, enc_output, g_out, batch_size=1)
                     predictions.append(pred)
                     if pred.item() == 102:
                         break

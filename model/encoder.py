@@ -18,8 +18,8 @@ class GlobalEncoderLayer(nn.Module):
         self.dropout = nn.Dropout(drop)
         self.norm = nn.LayerNorm(d_model)
 
-    def forward(self, x, mask=None):
-        x = self.att_layer(x, mask)       # In: seq_length x d_k. Out: seq_len x d_v
+    def forward(self, x, batch_size, mask=None):
+        x = self.att_layer(x, batch_size, mask)       # In: seq_length x d_k. Out: seq_len x d_v
         x = self.ff_layer(x)        # In: seq_len x d_v. Out: seq_len x d_v
         x = self.norm(F.relu(x))    # Normalize and activate
 
@@ -42,18 +42,22 @@ class GlobalEnhancedEncoder(nn.Module):
         # Output LSTM block
         self.final_lstm = nn.LSTM(input_size=d_model*2, hidden_size=d_model, num_layers=2, batch_first=True)
 
-    def forward(self, x, mask=None):
-        g = torch.rand([50, 1, self.d_model], device=x.device) # Initialize LSTM with random global feature
-        # g = torch.rand([50, 1, self.d_model]) # Initialize LSTM with random global feature
+    def forward(self, x, batch_size, mask=None):
+        if batch_size > 1:
+            g = torch.rand([batch_size, 1, self.d_model], device=x.device) # Initialize LSTM with random global feature
+            h = torch.zeros([2, batch_size, self.d_model], device=x.device)
+            c = torch.zeros([2, batch_size, self.d_model], device=x.device)
+            # Isolate global feature to feed into LSTM
+            index = torch.ones([batch_size, 1, self.d_model], device=x.device)
+            index = (len(x)-1)*index
+        else:
+            g = torch.rand([1, self.d_model], device=x.device) # Initialize LSTM with random global feature
+            h = torch.zeros([2, self.d_model], device=x.device)
+            c = torch.zeros([2, self.d_model], device=x.device)
+            # Isolate global feature to feed into LSTM
+            index = torch.ones([1, self.d_model], device=x.device)
+            index = (len(x)-1)*index
 
-        h = torch.zeros([2, 50, self.d_model], device=x.device)
-        c = torch.zeros([2, 50, self.d_model], device=x.device)
-
-        # Isolate global feature to feed into LSTM
-        index = torch.ones([50, 1, self.d_model], device=x.device)
-        # index = torch.ones([50, 1, self.d_model])
-        index = (len(x)-1)*index
-        
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):
             g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
@@ -64,7 +68,7 @@ class GlobalEnhancedEncoder(nn.Module):
             # Pass global feature to next layer LSTM
             g, (h, c) = l.forward(g.type(torch.float32), (h, c))
             # Pass total input to next encoder layer
-            x = e.forward(x, mask)
+            x = e.forward(x, batch_size, mask)
 
 
         # Final LSTM block

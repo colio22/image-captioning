@@ -122,9 +122,12 @@ class MultiHeadSelfAttention(nn.Module):
         # Create fully-connected, linear output layer
         self.out = nn.Linear(d_v, d_v)
 
-    def forward(self, X, mask=None):
+    def forward(self, X, batch_size, mask=None):
         # Create empty tensor for concatenated attention head outputs
-        outputs = torch.zeros([50, X.size(1), 0], device=X.device)
+        if batch_size > 1:
+            outputs = torch.zeros([batch_size, X.size(1), 0], device=X.device)
+        else:
+            outputs = torch.zeros([X.size(0), 0], device=X.device)
         # Loop through each attention head layer
         for l in self.heads:
           # Concatenate output of layer with previous outputs
@@ -147,9 +150,13 @@ class MultiHeadCrossAttention(nn.Module):
         # Create fully-connected, linear output layer
         self.out = nn.Linear(d_v, d_v)
 
-    def forward(self, X, K, V, g, mask=None):
+    def forward(self, X, K, V, g, batch_size, mask=None):
         # Create empty tensor for concatenated attention head outputs
-        outputs = torch.zeros([50, X.size(1), 0], device=X.device)
+        if batch_size > 1:
+            outputs = torch.zeros([batch_size, X.size(1), 0], device=X.device)
+        else:
+            outputs = torch.zeros([X.size(0), 0], device=X.device)
+
         # Loop through each attention head layer
         for l in self.heads:
           att = l.forward(X, K, V, mask)

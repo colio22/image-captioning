@@ -13,6 +13,7 @@ from transformers import AutoTokenizer
 # from common.utils.utils import create_dataset
 # from common.evaluation import PTBTokenizer, Cider
 from model.transformer import GlobalEnhancedTransformer
+from pycocoevalcap.cider.cider import Cider
 # from models import build_encoder, build_decoder, Transformer
 
 device = torch.device('cuda')
@@ -24,7 +25,7 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
     n = len(train_loader)   # Number of samples
     print_idx = int(n/10)   # Sample interval at which to print loss progress
     # Begin training
-    for batch_idx, (img, target) in enumerate(train_loader):
+    for batch_idx, (img, target, id) in enumerate(train_loader):
         # Place data tensors on GPU
         img = img.to(device)
         tokens = tokenizer(target, padding=True, truncation=True, return_tensors='pt')
@@ -43,7 +44,6 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
             print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}]') 
         train_loss.append(loss.item()) # Add loss of batch to list
         
-        break # Break after one iteration for dev work
     return train_loss
 
 def test(model: nn.Module,
@@ -54,12 +54,10 @@ def test(model: nn.Module,
 
     model.eval() # Set model to test mode
     test_loss = 0         # Initialize total loss of test to 0
-    test_predictions = [] # List of all classifications
-    correct = 0           # Initialize number of correct predictions to 0
-    total_num = 0         # Initialize total number of predictions to 0
+    test_predictions = {} # List of all generations
     # Begin testing
     with torch.no_grad():     # Turn gradients off for testing
-        for images, targets in test_loader:
+        for images, targets, ids in test_loader:
             # Put input data on GPU
             images = images.to(device)
             tokens = tokenizer(targets, padding=True, truncation=True, return_tensors='pt')
@@ -74,6 +72,11 @@ def test(model: nn.Module,
             # test_predictions.append(pred)  # Record prediction
             # total_num +=targets.size(0)   # Add number of samples to total
             # correct += pred.eq(targets.data.view_as(pred)).sum() # Add the correct pre
+
+            for caption, id in zip(output, ids):
+                test_predictions[f'{id}'] = caption
+
+            break # Dev only
     # Find average loss
     test_loss /= (len(test_loader.dataset) / test_loader.batch_size)
     # Turn list of predictions to single tensor
@@ -81,6 +84,35 @@ def test(model: nn.Module,
     test_stat = {'loss': test_loss}
 
     return test_stat
+
+def generate_test_strings(model, data, tokenizer):
+    model.eval()
+    caption_map = {}
+
+    with torch.no_grad():
+        for features, targets, ids in data:
+            features = features.to(device)
+            for feature, id in zip(features, input_tokens):
+                enc_output, g_out = model.encoder(feature)   # Put batch through model
+                predictions = [101*torch.ones([1,1], device=device).long()]
+                input_tokens = [101*torch.ones([1,1], device=device).long()]
+                for i in range(50):
+                    pred = model.decoder(input_tokens, enc_output, enc_output, g_out)
+                    predictions.append(pred)
+                    if pred.item() == 102:
+                        break
+
+                    input_tokens = torch.cat(predictions, 1)
+                pred_text = torch.cat(predictions, 1)
+                pred_text_strings = tokenizer.decode(pred_text[0], skip_special_tokens=True)
+                pred_text = "".join(pred_text_strings)
+
+                caption_map[f'{id}'] = pred_text
+
+def evaluate(generations, references):
+    cider_eval = Cider()
+    cider_score, _ = cider_eval.compute_score(references, generations)
+    print(f"CIDEr Score: {cider_score}")
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Dual Transformer')
@@ -123,6 +155,8 @@ def main(args):
     transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
     train_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_train2014.json', transform)
     test_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_val2014.json', transform)
+
+    reference_map = test_dataset.get_ref_dict()
 
     print(train_dataset)
 
@@ -176,7 +210,14 @@ def main(args):
         loss = train(model, criterion, optim, train_loader, tokenizer, epoch)
         result = test(model, criterion, test_loader, tokenizer, epoch)
 
-    print(f'===Loss: {loss}')
+    print("Saving model...")
+    torch.save(model.state_dict(), f'{args.exp_name}.pth')
+
+    generations = generate_test_strings(model, test_loader, tokenizer)
+
+    scores = evaluate(generations, reference_map):
+
+
 
 if __name__ == "__main__":
     args = parse_args()

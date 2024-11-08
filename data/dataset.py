@@ -27,6 +27,13 @@ class COCODataset(Dataset):
             self.data.append(id_map.anns[id]['image_id'])
             self.targets.append(id_map.anns[id]['caption'])
 
+    def get_ref_dict(self):
+        ref = {}
+        for id, caption in zip(self.data, self.targets):
+            ref[f'{id}'] = caption
+
+        return ref
+
     def __len__(self):
         return len(self.data)
 
@@ -50,4 +57,4 @@ class COCODataset(Dataset):
 
         f.close()
 
-        return feature, caption
+        return feature, caption, feature_id

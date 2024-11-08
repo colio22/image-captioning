@@ -56,7 +56,6 @@ class GlobalEnhancedEncoder(nn.Module):
         
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):
-            print(f'=== Input tensor: {x.shape}. Index tensor: {index.shape}')
             g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
 
             # Concatenate with output of last LSTM layer to feed to next block
@@ -67,7 +66,6 @@ class GlobalEnhancedEncoder(nn.Module):
             # Pass total input to next encoder layer
             x = e.forward(x, mask)
 
-            print(f'=== EOL: g={g.shape}, h={h.shape}, c={c.shape}, x={x.shape}')
 
         # Final LSTM block
         g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument

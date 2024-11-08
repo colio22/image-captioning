@@ -25,7 +25,6 @@ class GlobalEnhancedTransformer(nn.Module):
     def forward(self, img, seq):
         # Create global feature composite of all other features
         x = torch.sum(img, dim=1)
-        print(f'==== Feature dim: {img.shape}. Sum dim: {x.shape}')
         # Normalize by the number of non-padding feature vectors
         num_padding = len(x) - len(torch.nonzero(x))
         g = x / (len(x) - num_padding)

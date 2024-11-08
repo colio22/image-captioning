@@ -51,7 +51,6 @@ class SelfAttention(nn.Module):
         if mask != None:  # If mask provided
             # Replace all values masked with False with -infinity
             # Pytorch documentation of masked_fill revealed need to flip mask with logical_n
-            print(f'!!!!! Mask shape: {mask.shape}. Q*K resulting shape: {qk.shape}')
             qk = qk.masked_fill(mask.logical_not(), -np.inf)
 
         # Apply softmax to QK matrix
@@ -87,7 +86,6 @@ class CrossAttention(nn.Module):
     def attention_score(self, Q, K, V, mask=None):
         d_k = Q.size(-1)
         # Batch multiply Q and K and then scale
-        print(f'~~~ In att score. Q={Q.shape}. K={K.shape}. V={V.shape}')
         qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)
 
         if mask != None:
@@ -158,7 +156,6 @@ class MultiHeadCrossAttention(nn.Module):
           # Concatenate output of layer with previous outputs
           outputs = torch.cat((outputs, att), -1)
 
-        print(f'Outputs: {outputs.shape}. X: {X.shape}. G: {g.shape}')
         outputs = outputs + (X * g)
         # Pass concatenated matrix through fully-connected output layer
         outputs = self.out(outputs)

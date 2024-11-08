@@ -75,7 +75,6 @@ class GlobalAdaptiveDecoder(nn.Module):
         return mask
 
     def forward(self, x, K, V, g):
-        print(f'===Shape of x for pos enc: {x.shape}')
         # Embed and encode word sequence
         out = self.word_emb(x) + self.get_positional_encoding(self.d_model, x.size(1), x.device)
         # Create a mask to prevent things from the future

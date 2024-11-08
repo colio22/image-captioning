@@ -158,6 +158,7 @@ class MultiHeadCrossAttention(nn.Module):
           # Concatenate output of layer with previous outputs
           outputs = torch.cat((outputs, att), -1)
 
+        print(f'Outputs: {outputs.shape}. X: {X.shape}. G: {g.shape}')
         outputs = outputs + (X * g)
         # Pass concatenated matrix through fully-connected output layer
         outputs = self.out(outputs)

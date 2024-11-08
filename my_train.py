@@ -44,8 +44,6 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         if batch_idx % print_idx == 0: # Log output 10 times per epoch
             print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}]') 
         train_loss.append(loss.item()) # Add loss of batch to list
-
-        break # Dev only
         
     return train_loss
 
@@ -76,7 +74,6 @@ def test(model: nn.Module,
             # total_num +=targets.size(0)   # Add number of samples to total
             # correct += pred.eq(targets.data.view_as(pred)).sum() # Add the correct pre
 
-            break # Dev only
     # Find average loss
     test_loss /= (len(test_loader.dataset) / test_loader.batch_size)
     # Turn list of predictions to single tensor

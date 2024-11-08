@@ -3,6 +3,8 @@ import torch
 from torch import nn
 from model.attention import MultiHeadSelfAttention, MultiHeadCrossAttention
 from common.models.transformer import sinusoid_encoding_table
+import math
+
 
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, d_k, d_v, num_heads, drop):
@@ -41,16 +43,33 @@ class GlobalAdaptiveDecoder(nn.Module):
         self.decode_layers = nn.ModuleList([DecoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(self.num_layers)])
         self.ffn = nn.Linear(d_model, d_model)
         self.word_emb = nn.Embedding(vocab_size, d_model, padding_idx=padding)
-        self.pos_enc = nn.Embedding.from_pretrained(sinusoid_encoding_table(max_len+1, d_model, 0), freeze=True)
+        # self.pos_enc = nn.Embedding.from_pretrained(sinusoid_encoding_table(max_len+1, d_model, 0), freeze=True)
+
+    def get_positional_encoding(self, d_model, seq_len):
+        """
+        Generate a matrix where each row corresponds to the positional encoding for a 
+        """
+
+        # Initialize empty matrix to hold positional encodings
+        pe = torch.zeros(seq_len, d_model)
+        # Iterate over entire encoding matrix
+        for i in range(0, seq_len):  # Loop over each row
+          for j in range(0, int(d_model/2)): # Loop over half of dimensions
+            # Apply sin encoding to 2*dimension index of matrix
+            pe[i][2*j] = math.sin((i)/pow(10000, (2*j)/d_model))
+            # Apply cos encoding to (2*dimension)+1 index of matrix
+            pe[i][(2*j)+1] = math.cos((i)/pow(10000, (2*j)/d_model))
+        return pe
 
     def forward(self, x, K, V, g, mask=None):
-        b_s, seq_len = input.shape[:2]
-        seq = torch.arange(1, seq_len + 1).view(1, -1).expand(b_s, -1).to(input.device)  # (b_s, seq_len)
+        # b_s, seq_len = input.shape[:2]
+        # seq = torch.arange(1, seq_len + 1).view(1, -1).expand(b_s, -1).to(input.device)  # (b_s, seq_len)
 
-        out = self.word_emb(x) + self.pos_enc(seq)
+        print(f'===Length of x for pos enc: {len(x)}')
+        out = self.word_emb(x) + self.get_positional_encoding(self.d_model, len(x))
         for l in self.decode_layers:
-            x = l.forward(x)
+            out = l.forward(out, K, V, g, mask)
 
-        x = torch.softmax(self.ffn(x), -1)
+        out = torch.softmax(self.ffn(out), -1)
 
-        return x
+        return out

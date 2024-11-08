@@ -70,6 +70,9 @@ class GlobalEnhancedEncoder(nn.Module):
             print(f'=== EOL: g={g.shape}, h={h.shape}, c={c.shape}, x={x.shape}')
 
         # Final LSTM block
+        g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
+        # Concatenate with output of last LSTM layer to feed to next block
+        g = torch.cat((g, g_in), -1)
         g, (h, c) = self.final_lstm(g, (h,c))
         return x, g
     

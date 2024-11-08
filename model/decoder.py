@@ -61,7 +61,7 @@ class GlobalAdaptiveDecoder(nn.Module):
             pe[i][(2*j)+1] = math.cos((i)/pow(10000, (2*j)/d_model))
         return pe
 
-    def create_mask(seq_len):
+    def create_mask(self, seq_len):
         # Create empty bool mask
         mask = torch.zeros(seq_len, seq_len, dtype=torch.bool)
         # Loop over entire mask

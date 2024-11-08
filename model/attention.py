@@ -81,7 +81,7 @@ class CrossAttention(nn.Module):
         # Create fully-connected linear network layers
         self.q_layer = nn.Linear(d_in, d_k)   # Input to Queries
 
-    def att_score(Q, K, V, mask=None):
+    def attention_score(self, Q, K, V, mask=None):
         d_k = Q.size(-1)
         # Batch multiply Q and K and then scale
         qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)

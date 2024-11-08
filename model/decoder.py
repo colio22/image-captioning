@@ -65,7 +65,7 @@ class GlobalAdaptiveDecoder(nn.Module):
         # b_s, seq_len = input.shape[:2]
         # seq = torch.arange(1, seq_len + 1).view(1, -1).expand(b_s, -1).to(input.device)  # (b_s, seq_len)
 
-        print(f'===Length of x for pos enc: {len(x)}')
+        print(f'===Shape of x for pos enc: {x.shape}')
         out = self.word_emb(x) + self.get_positional_encoding(self.d_model, len(x))
         for l in self.decode_layers:
             out = l.forward(out, K, V, g, mask)

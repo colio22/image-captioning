@@ -49,6 +49,7 @@ class SelfAttention(nn.Module):
             # Batch multiply Q and K and then scale
             qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)
         else:
+            print(f"Shape of Q: {Q.shape}. K: {K.shape}")
             qk = torch.matmul(Q, torch.transpose(K)) / math.sqrt(d_k)
 
         if mask != None:  # If mask provided

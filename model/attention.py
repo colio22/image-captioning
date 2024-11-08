@@ -81,6 +81,8 @@ class CrossAttention(nn.Module):
 
         # Create fully-connected linear network layers
         self.q_layer = nn.Linear(d_in, d_k)   # Input to Queries
+        self.k_layer = nn.Linear(d_in, d_k)   # Input to Keys
+        self.v_layer = nn.Linear(d_in, d_v)   # Input to Values
 
     def attention_score(self, Q, K, V, mask=None):
         d_k = Q.size(-1)
@@ -97,13 +99,15 @@ class CrossAttention(nn.Module):
         score = torch.bmm(weights, V)
         return score, weights
 
-    def forward(self, X, K, V, mask=None):
+    def forward(self, Q, K, V, mask=None):
         # Connect layers in network
-        q = self.q_layer(X)   # Connect input to Queries
+        q = self.q_layer(Q)   # Connect input to Queries
+        k = self.q_layer(K)   # Connect input to Queries
+        v = self.q_layer(V)   # Connect input to Queries
 
         # Use existing self-attention function to attend output
-        out, weight = self.attention_score(q, K, V, mask)
-        return out, q
+        out, weight = self.attention_score(q, k, v, mask)
+        return out
 
     
 class MultiHeadSelfAttention(nn.Module):
@@ -150,11 +154,11 @@ class MultiHeadCrossAttention(nn.Module):
         outputs = torch.zeros(32, 10, 0)
         # Loop through each attention head layer
         for l in self.heads:
-          att, q = l.forward(X, K, V, mask)
+          att = l.forward(X, K, V, mask)
           # Concatenate output of layer with previous outputs
           outputs = torch.cat((outputs, att), -1)
 
-        outputs = outputs + torch.bmm(q, g)
+        outputs = outputs + (X * g)
         # Pass concatenated matrix through fully-connected output layer
         outputs = self.out(outputs)
         return outputs

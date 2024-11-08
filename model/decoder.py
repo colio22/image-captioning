@@ -41,7 +41,7 @@ class GlobalAdaptiveDecoder(nn.Module):
         self.drop = drop
 
         self.decode_layers = nn.ModuleList([DecoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(self.num_layers)])
-        self.ffn = nn.Linear(d_model, d_model)
+        self.ffn = nn.Linear(d_model, vocab_size)
         self.word_emb = nn.Embedding(vocab_size, d_model, padding_idx=padding)
         # self.pos_enc = nn.Embedding.from_pretrained(sinusoid_encoding_table(max_len+1, d_model, 0), freeze=True)
 

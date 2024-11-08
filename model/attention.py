@@ -51,6 +51,7 @@ class SelfAttention(nn.Module):
         if mask != None:  # If mask provided
             # Replace all values masked with False with -infinity
             # Pytorch documentation of masked_fill revealed need to flip mask with logical_n
+            print(f'!!!!! Mask shape: {mask.shape}. Q*K resulting shape: {qk.shape}')
             qk = qk.masked_fill(mask.logical_not(), -np.inf)
 
         # Apply softmax to QK matrix

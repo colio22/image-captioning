@@ -82,6 +82,7 @@ class GlobalAdaptiveDecoder(nn.Module):
 
         # Pass sequence and encoder results through each decode layer
         for l in self.decode_layers:
+            print(f'Output inside decoder: {out.shape}')
             out = l.forward(out, K, V, g, batch_size, mask)
 
         # Activate output with fully connected layer

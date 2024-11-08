@@ -45,13 +45,13 @@ class GlobalAdaptiveDecoder(nn.Module):
         self.word_emb = nn.Embedding(vocab_size, d_model, padding_idx=padding)
         # self.pos_enc = nn.Embedding.from_pretrained(sinusoid_encoding_table(max_len+1, d_model, 0), freeze=True)
 
-    def get_positional_encoding(self, d_model, seq_len):
+    def get_positional_encoding(self, d_model, seq_len, device):
         """
         Generate a matrix where each row corresponds to the positional encoding for a 
         """
 
         # Initialize empty matrix to hold positional encodings
-        pe = torch.zeros(seq_len, d_model)
+        pe = torch.zeros([seq_len, d_model], device=device)
         # Iterate over entire encoding matrix
         for i in range(0, seq_len):  # Loop over each row
           for j in range(0, int(d_model/2)): # Loop over half of dimensions
@@ -66,7 +66,7 @@ class GlobalAdaptiveDecoder(nn.Module):
         # seq = torch.arange(1, seq_len + 1).view(1, -1).expand(b_s, -1).to(input.device)  # (b_s, seq_len)
 
         print(f'===Shape of x for pos enc: {x.shape}')
-        out = self.word_emb(x) + self.get_positional_encoding(self.d_model, x.size(1))
+        out = self.word_emb(x) + self.get_positional_encoding(self.d_model, x.size(1), x.device)
         for l in self.decode_layers:
             out = l.forward(out, K, V, g, mask)
 

@@ -85,6 +85,7 @@ class CrossAttention(nn.Module):
     def attention_score(self, Q, K, V, mask=None):
         d_k = Q.size(-1)
         # Batch multiply Q and K and then scale
+        print(f'~~~ In att score. Q={Q.shape}. K={K.shape}. V={V.shape}')
         qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)
 
         if mask != None:

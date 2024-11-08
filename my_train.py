@@ -91,7 +91,7 @@ def generate_test_strings(model, data, tokenizer):
     with torch.no_grad():
         for features, targets, ids in data:
             features = features.to(device)
-            for feature, id in zip(features, input_tokens):
+            for feature, id in zip(features, ids):
                 enc_output, g_out = model.encoder(feature)   # Put batch through model
                 predictions = [101*torch.ones([1,1], device=device).long()]
                 input_tokens = [101*torch.ones([1,1], device=device).long()]

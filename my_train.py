@@ -99,8 +99,12 @@ def generate_test_strings(model, data, tokenizer):
                     input_tokens = torch.cat(predictions, 1).to(device)
                     print(f'Input Toks: {input_tokens.shape}. Enc Out: {enc_output.shape}. G: {g_out.shape}')
                     pred = model.decoder(input_tokens, enc_output, enc_output, g_out, batch_size=1)
-                    predictions.append(pred)
-                    if pred.item() == 102:
+
+                    dist = torch.distributions.Categorical(logits=pred[:, -1] / 0.5)
+                    predicted_token = dist.sample().reshape(1, 1)
+                    predictions.append(predicted_token)
+
+                    if predicted_token.item() == 102:
                         break
 
                 pred_text = torch.cat(predictions, 1)

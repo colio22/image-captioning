@@ -41,10 +41,46 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         optimizer.step()
         if batch_idx % print_idx == 0: # Log output 10 times per epoch
             print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}]') 
-        # train_loss.append(loss.item()) # Add loss of batch to list
+        train_loss.append(loss.item()) # Add loss of batch to list
         
         break # Break after one iteration for dev work
     return train_loss
+
+def test(model: nn.Module,
+        loss_fn: nn.modules.loss._Loss,
+        test_loader: torch.utils.data.DataLoader,
+        tokenizer,
+        epoch: int=0):
+
+    model.eval() # Set model to test mode
+    test_loss = 0         # Initialize total loss of test to 0
+    test_predictions = [] # List of all classifications
+    correct = 0           # Initialize number of correct predictions to 0
+    total_num = 0         # Initialize total number of predictions to 0
+    # Begin testing
+    with torch.no_grad():     # Turn gradients off for testing
+        for images, targets in test_loader:
+            # Put input data on GPU
+            images = images.to(device)
+            tokens = tokenizer(targets, padding=True, truncation=True, return_tensors='pt')
+            token_ids = tokens['input_ids']
+            token_ids = token_ids.to(device)
+
+            output = model(images, token_ids)   # Put batch through model
+            loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
+            test_loss += loss.item()
+            # test_loss += loss_fn(output, targets).item() # Add loss to total
+            # pred = output.data.max(1, keepdim=True)[1] # Find largest class value
+            # test_predictions.append(pred)  # Record prediction
+            # total_num +=targets.size(0)   # Add number of samples to total
+            # correct += pred.eq(targets.data.view_as(pred)).sum() # Add the correct pre
+    # Find average loss
+    test_loss /= (len(test_loader.dataset) / test_loader.batch_size)
+    # Turn list of predictions to single tensor
+    test_predictions = torch.cat(test_predictions)
+    test_stat = {'loss': test_loss}
+
+    return test_stat
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Dual Transformer')
@@ -91,7 +127,7 @@ def main(args):
     print(train_dataset)
 
     batch_size_train = args.batch_size
-    batch_size_test = 1000
+    batch_size_test = args.batch_size
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size_test, shuffle=False)
@@ -134,10 +170,11 @@ def main(args):
     optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
     criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['[PAD]'])
 
-    max_epoch = 3
+    max_epoch = 1
 
     for epoch in range(1, max_epoch+1):
         loss = train(model, criterion, optim, train_loader, tokenizer, epoch)
+        result = test(model, criterion, test_loader, tokenizer, epoch)
 
     print(f'===Loss: {loss}')
 

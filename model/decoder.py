@@ -2,7 +2,6 @@ from torch.nn import functional as F
 import torch
 from torch import nn
 from model.attention import MultiHeadSelfAttention, MultiHeadCrossAttention
-from common.models.transformer import sinusoid_encoding_table
 import math
 
 
@@ -40,10 +39,12 @@ class GlobalAdaptiveDecoder(nn.Module):
         self.num_heads = num_heads      # Number of heads used in attention
         self.drop = drop                # Dropout percentage
 
+        # List of decoder layers
         self.decode_layers = nn.ModuleList([DecoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(self.num_layers)])
+        # Feed-forward network for output of each decoder layer
         self.ffn = nn.Linear(d_model, vocab_size)
+        # Embedding layer for input sequence
         self.word_emb = nn.Embedding(vocab_size, d_model, padding_idx=padding)
-        # self.pos_enc = nn.Embedding.from_pretrained(sinusoid_encoding_table(max_len+1, d_model, 0), freeze=True)
 
     def get_positional_encoding(self, d_model, seq_len, device):
         """

@@ -217,7 +217,7 @@ def main(args):
 
     generations = generate_test_strings(model, test_loader, tokenizer)
 
-    scores = evaluate(generations, reference_map):
+    evaluate(generations, reference_map)
 
 
 

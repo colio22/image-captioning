@@ -48,13 +48,14 @@ class GlobalEnhancedEncoder(nn.Module):
 
         h = torch.zeros([2, 50, self.d_model], device=x.device)
         c = torch.zeros([2, 50, self.d_model], device=x.device)
+
+        # Isolate global feature to feed into LSTM
+        index = torch.ones([50, 1, self.d_model], device=x.device)
+        # index = torch.ones([50, 1, self.d_model])
+        index = (len(x)-1)*index
         
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):
-            # Isolate global feature to feed into LSTM
-            index = torch.ones([50, 1, self.d_model], device=x.device)
-            # index = torch.ones([50, 1, self.d_model])
-            index = (len(x)-1)*index
             print(f'=== Input tensor: {x.shape}. Index tensor: {index.shape}')
             g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
 
@@ -65,6 +66,8 @@ class GlobalEnhancedEncoder(nn.Module):
             g, (h, c) = l.forward(g.type(torch.float32), (h, c))
             # Pass total input to next encoder layer
             x = e.forward(x, mask)
+
+            print(f'=== EOL: g={g.shape}, h={h.shape}, c={c.shape}, x={x.shape}')
 
         # Final LSTM block
         g, (h, c) = self.final_lstm(g, (h,c))

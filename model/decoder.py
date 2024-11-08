@@ -61,9 +61,9 @@ class GlobalAdaptiveDecoder(nn.Module):
             pe[i][(2*j)+1] = math.cos((i)/pow(10000, (2*j)/d_model))
         return pe
 
-    def create_mask(self, seq_len):
+    def create_mask(self, seq_len, device):
         # Create empty bool mask
-        mask = torch.zeros(seq_len, seq_len, dtype=torch.bool)
+        mask = torch.zeros([seq_len, seq_len], device=device, dtype=torch.bool)
         # Loop over entire mask
         for i in range(0, seq_len):
           for j in range(0, seq_len):
@@ -79,7 +79,7 @@ class GlobalAdaptiveDecoder(nn.Module):
 
         print(f'===Shape of x for pos enc: {x.shape}')
         out = self.word_emb(x) + self.get_positional_encoding(self.d_model, x.size(1), x.device)
-        mask = self.create_mask(x.size(1))
+        mask = self.create_mask(x.size(1), x.device)
         for l in self.decode_layers:
             out = l.forward(out, K, V, g, mask)
 

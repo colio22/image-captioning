@@ -102,8 +102,8 @@ class CrossAttention(nn.Module):
     def forward(self, Q, K, V, mask=None):
         # Connect layers in network
         q = self.q_layer(Q)   # Connect input to Queries
-        k = self.q_layer(K)   # Connect input to Queries
-        v = self.q_layer(V)   # Connect input to Queries
+        k = self.k_layer(K)   # Connect input to Queries
+        v = self.v_layer(V)   # Connect input to Queries
 
         # Use existing self-attention function to attend output
         out, weight = self.attention_score(q, k, v, mask)

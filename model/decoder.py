@@ -30,15 +30,15 @@ class DecoderLayer(nn.Module):
 class GlobalAdaptiveDecoder(nn.Module):
     def __init__(self, vocab_size, max_len, padding, num_layers, d_model, d_k, d_v, num_heads, drop):
         super(GlobalAdaptiveDecoder, self).__init__()
-        self.vocab_size = vocab_size
-        self.max_len = max_len
-        self.padding = padding
-        self.num_layers = num_layers
-        self.d_model = d_model
-        self.d_k = d_k
-        self.d_v = d_v
-        self.num_heads = num_heads
-        self.drop = drop
+        self.vocab_size = vocab_size    # Number of words in vocabulary
+        self.max_len = max_len          # Maximum length of caption sequence
+        self.padding = padding          # Padding used for embedding words
+        self.num_layers = num_layers    # Number of decode layers
+        self.d_model = d_model          # Dimensionality of decoder
+        self.d_k = d_k                  # Dimension of keys and quries
+        self.d_v = d_v                  # Dimension of attention values
+        self.num_heads = num_heads      # Number of heads used in attention
+        self.drop = drop                # Dropout percentage
 
         self.decode_layers = nn.ModuleList([DecoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(self.num_layers)])
         self.ffn = nn.Linear(d_model, vocab_size)
@@ -74,15 +74,17 @@ class GlobalAdaptiveDecoder(nn.Module):
         return mask
 
     def forward(self, x, K, V, g):
-        # b_s, seq_len = input.shape[:2]
-        # seq = torch.arange(1, seq_len + 1).view(1, -1).expand(b_s, -1).to(input.device)  # (b_s, seq_len)
-
         print(f'===Shape of x for pos enc: {x.shape}')
+        # Embed and encode word sequence
         out = self.word_emb(x) + self.get_positional_encoding(self.d_model, x.size(1), x.device)
+        # Create a mask to prevent things from the future
         mask = self.create_mask(x.size(1), x.device)
+
+        # Pass sequence and encoder results through each decode layer
         for l in self.decode_layers:
             out = l.forward(out, K, V, g, mask)
 
+        # Activate output with fully connected layer
         out = torch.softmax(self.ffn(out), -1)
 
         return out

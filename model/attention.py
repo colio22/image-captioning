@@ -151,7 +151,7 @@ class MultiHeadCrossAttention(nn.Module):
 
     def forward(self, X, K, V, g, mask=None):
         # Create empty tensor for concatenated attention head outputs
-        outputs = torch.zeros(32, 10, 0)
+        outputs = torch.zeros([32, 10, 0], device=X.device)
         # Loop through each attention head layer
         for l in self.heads:
           att = l.forward(X, K, V, mask)

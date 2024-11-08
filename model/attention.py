@@ -121,7 +121,7 @@ class MultiHeadSelfAttention(nn.Module):
 
     def forward(self, X, mask=None):
         # Create empty tensor for concatenated attention head outputs
-        outputs = torch.zeros([50, 51, 0], device=X.device)
+        outputs = torch.zeros([50, X.size(1), 0], device=X.device)
         # Loop through each attention head layer
         for l in self.heads:
           # Concatenate output of layer with previous outputs

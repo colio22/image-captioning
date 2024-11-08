@@ -77,6 +77,8 @@ class GlobalAdaptiveDecoder(nn.Module):
     def forward(self, x, K, V, g, batch_size):
         # Embed and encode word sequence
         out = self.word_emb(x) + self.get_positional_encoding(self.d_model, x.size(1), x.device)
+        if batch_size <= 1:
+           out = torch.squeeze(out, dim=0)
         # Create a mask to prevent things from the future
         mask = self.create_mask(x.size(1), x.device)
 

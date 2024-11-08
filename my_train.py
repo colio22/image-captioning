@@ -75,14 +75,11 @@ def test(model: nn.Module,
             # total_num +=targets.size(0)   # Add number of samples to total
             # correct += pred.eq(targets.data.view_as(pred)).sum() # Add the correct pre
 
-            for caption, id in zip(output, ids):
-                test_predictions[f'{id}'] = caption
-
             break # Dev only
     # Find average loss
     test_loss /= (len(test_loader.dataset) / test_loader.batch_size)
     # Turn list of predictions to single tensor
-    test_predictions = torch.cat(test_predictions)
+    # test_predictions = torch.cat(test_predictions)
     test_stat = {'loss': test_loss}
 
     return test_stat

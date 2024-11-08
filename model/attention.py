@@ -31,7 +31,7 @@ class SelfAttention(nn.Module):
         score = torch.bmm(weights, V)
         return score, weights
 
-    def attention_score(self, Q, K, V, mask=None):
+    def attention_score(self, Q, K, V, batch_size, mask=None):
         """
         Computes scaled dot-product attention.
         Parameters:
@@ -45,8 +45,11 @@ class SelfAttention(nn.Module):
 
         d_k = Q.size(-1)
 
-        # Batch multiply Q and K and then scale
-        qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)
+        if batch_size > 1:
+            # Batch multiply Q and K and then scale
+            qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)
+        else:
+            qk = torch.matmul(Q, torch.transpose(K, 0, 1)) / math.sqrt(d_k)
 
         if mask != None:  # If mask provided
             # Replace all values masked with False with -infinity
@@ -55,18 +58,23 @@ class SelfAttention(nn.Module):
 
         # Apply softmax to QK matrix
         weights = torch.softmax(qk, -1)
-        # Multiply with V
-        score = torch.bmm(weights, V)
+
+        if batch_size > 1:
+            # Multiply with V
+            score = torch.bmm(weights, V)
+        else:
+            score = torch.matmul(weights, V)
+
         return score, weights
 
-    def forward(self, X, mask=None):
+    def forward(self, X, batch_size, mask=None):
         # Connect layers in network
         q = self.q_layer(X.float())   # Connect input to Queries
         k = self.k_layer(X.float())   # Connect input to Keys
         v = self.v_layer(X.float())   # Connect input to Values
 
         # Use existing self-attention function to attend output
-        out, weight = self.attention_score(q, k, v, mask)
+        out, weight = self.attention_score(q, k, v, batch_size, mask)
         return out
 
 
@@ -83,28 +91,36 @@ class CrossAttention(nn.Module):
         self.k_layer = nn.Linear(d_in, d_k)   # Input to Keys
         self.v_layer = nn.Linear(d_in, d_v)   # Input to Values
 
-    def attention_score(self, Q, K, V, mask=None):
+    def attention_score(self, Q, K, V, batch_size, mask=None):
         d_k = Q.size(-1)
-        # Batch multiply Q and K and then scale
-        qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)
+        if batch_size > 1:
+            # Batch multiply Q and K and then scale
+            qk = torch.bmm(Q, torch.transpose(K, 1, 2)) / math.sqrt(d_k)
+        else:
+            qk = torch.matmul(Q, torch.transpose(K, 0, 1)) / math.sqrt(d_k)
 
         if mask != None:
             qk = qk.masked_fill(mask.logical_not(), -np.inf)
 
         # Softmax of QK matrix
         weights = torch.softmax(qk, -1)
-        # Multiply with V
-        score = torch.bmm(weights, V)
+
+        if batch_size > 1:
+            # Multiply with V
+            score = torch.bmm(weights, V)
+        else:
+            score = torch.matmul(weights, V)
+
         return score, weights
 
-    def forward(self, Q, K, V, mask=None):
+    def forward(self, Q, K, V, batch_size, mask=None):
         # Connect layers in network
         q = self.q_layer(Q)   # Connect input to Queries
         k = self.k_layer(K)   # Connect input to Queries
         v = self.v_layer(V)   # Connect input to Queries
 
         # Use existing self-attention function to attend output
-        out, weight = self.attention_score(q, k, v, mask)
+        out, weight = self.attention_score(q, k, v, batch_size, mask)
         return out
 
     
@@ -131,7 +147,7 @@ class MultiHeadSelfAttention(nn.Module):
         # Loop through each attention head layer
         for l in self.heads:
           # Concatenate output of layer with previous outputs
-          outputs = torch.cat((outputs, l.forward(X, mask)), -1)
+          outputs = torch.cat((outputs, l.forward(X, batch_size, mask)), -1)
         # Pass concatenated matrix through fully-connected output layer
         outputs = self.out(outputs)
         return outputs
@@ -159,7 +175,7 @@ class MultiHeadCrossAttention(nn.Module):
 
         # Loop through each attention head layer
         for l in self.heads:
-          att = l.forward(X, K, V, mask)
+          att = l.forward(X, K, V, batch_size, mask)
           # Concatenate output of layer with previous outputs
           outputs = torch.cat((outputs, att), -1)
 

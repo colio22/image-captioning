@@ -43,6 +43,8 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         if batch_idx % print_idx == 0: # Log output 10 times per epoch
             print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}]') 
         train_loss.append(loss.item()) # Add loss of batch to list
+
+        break # Dev only
         
     return train_loss
 

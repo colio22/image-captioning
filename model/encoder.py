@@ -14,9 +14,9 @@ class GlobalEncoderLayer(nn.Module):
 
         # Layers per encoder
         self.att_layer = MultiHeadSelfAttention(d_model, d_k, d_v, num_heads)
-        self.ff_layer = nn.Linear(d_model, d_model)
+        self.ff_layer = nn.Linear(d_v, d_v)
         self.dropout = nn.Dropout(drop)
-        self.norm = nn.LayerNorm(d_model)
+        self.norm = nn.LayerNorm(d_v)
 
     def forward(self, x, batch_size, mask=None):
         x = self.att_layer(x, batch_size, mask)       # In: seq_length x d_k. Out: seq_len x d_v

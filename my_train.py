@@ -47,7 +47,7 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         print(f"Expected shape: {expected_out.shape}. Model output shape: {output.shape}")
         print(f"After output adjustment, output is {output[:,:-1].shape}")
         # loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
-        loss = loss_fn(output[:,:-1], expected_out)   # Calculate loss
+        loss = loss_fn(output[:,:-1].view(batch_size, -1), expected_out.view(batch_size, -1))   # Calculate loss
         loss.backward()        # Update weights
         optimizer.step()
 

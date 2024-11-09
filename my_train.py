@@ -10,6 +10,7 @@ from transformers import AutoTokenizer
 from model.transformer import GlobalEnhancedTransformer
 from pycocoevalcap.cider.cider import Cider
 import json
+import torch.nn.functional as F
 
 
 device = torch.device('cuda')
@@ -38,12 +39,13 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         token_ids = tokens['input_ids']
         token_ids = token_ids.to(device)
         print(f"Token size: {token_ids.shape[0]}")
+        expected_out = F.one_hot(token_ids[:,1:], num_classes=tokenizer.vocab_size)
 
         optimizer.zero_grad()  # Initialize gradients to 0
 
         output = model(img, token_ids, batch_size)    # Put input batch through model
         # loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
-        loss = loss_fn(output[:,:-1], token_ids[:,1:])   # Calculate loss
+        loss = loss_fn(output[:,:-1], expected_out.view(50, -1))   # Calculate loss
         loss.backward()        # Update weights
         optimizer.step()
 

@@ -74,7 +74,7 @@ class SelfAttention(nn.Module):
         v = self.v_layer(X.float())   # Connect input to Values
 
         # Use existing self-attention function to attend output
-        print(f'Before attention: X={out.shape}')
+        print(f'Before attention: q={q.shape}, k={k.shape}, v={v.shape}')
         out, weight = self.attention_score(q, k, v, batch_size, mask)
         print(f'After attention: X={out.shape}')
         return out

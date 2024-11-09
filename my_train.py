@@ -213,7 +213,7 @@ def main(args):
     # Select optimizer and loss function
     optim = Adam(model.parameters(), lr=0.1, betas=(0.9, 0.98))
     # criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['[PAD]'])
-    criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.vocab['[PAD]'])
+    criterion = nn.CrossEntropyLoss(reduction="none")
 
     # Train and test for desired number of epochs
     max_epoch = 1

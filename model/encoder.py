@@ -46,14 +46,14 @@ class GlobalEnhancedEncoder(nn.Module):
 
     def forward(self, x, batch_size, mask=None):
         if batch_size > 1:
-            g = torch.rand([batch_size, 1, self.d_model], device=x.device) # Initialize LSTM with random global feature
+            g = torch.rand([batch_size, 1, self.feature_size], device=x.device) # Initialize LSTM with random global feature
             h = torch.zeros([1, batch_size, self.d_model], device=x.device)
             c = torch.zeros([1, batch_size, self.d_model], device=x.device)
             # Isolate global feature to feed into LSTM
             index = torch.ones([batch_size, 1, self.d_model], device=x.device)
             index = (len(x)-1)*index
         else:
-            g = torch.rand([1, self.d_model], device=x.device) # Initialize LSTM with random global feature
+            g = torch.rand([1, self.feature_size], device=x.device) # Initialize LSTM with random global feature
             h = torch.zeros([1, self.d_model], device=x.device)
             c = torch.zeros([1, self.d_model], device=x.device)
             # Isolate global feature to feed into LSTM

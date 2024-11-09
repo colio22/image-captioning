@@ -29,6 +29,7 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
 
     # Begin training
     for batch_idx, (img, target, id) in enumerate(train_loader):
+        print(f"Batch {batch_idx} of {int(len(train_loader)) + 1}")
         # Place data tensors on GPU
         img = img.to(device)
 

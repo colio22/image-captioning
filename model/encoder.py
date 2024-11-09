@@ -20,6 +20,7 @@ class GlobalEncoderLayer(nn.Module):
 
     def forward(self, x, batch_size, mask=None):
         x = self.att_layer(x, batch_size, mask)       # In: seq_length x d_k. Out: seq_len x d_v
+        print(f"After attention: X={x.shape}")
         x = self.ff_layer(x)        # In: seq_len x d_v. Out: seq_len x d_v
         x = self.norm(F.relu(x))    # Normalize and activate
 

@@ -47,7 +47,7 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         output = model(img, token_ids, batch_size)    # Put input batch through model
         # loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
         output = output[:,:-1].contiguous()
-        loss = loss_fn(output.transpose(1, 2), expected_out.transpose(1, 2))   # Calculate loss
+        loss = loss_fn(output.transpose(1, 2).float(), expected_out.transpose(1, 2).float())   # Calculate loss
         loss.backward()        # Update weights
         optimizer.step()
 

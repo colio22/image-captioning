@@ -5,6 +5,7 @@ import numpy as np
 from pycocotools.coco import COCO
 import h5py
 import random
+import sys
 
 
 class COCODataset(Dataset):
@@ -53,7 +54,11 @@ class COCODataset(Dataset):
         f = h5py.File(self.detection_path, 'r')
 
         feature_id = self.data[idx]
-        feature = f[f'{feature_id}_features'][()]
+        try:
+            feature = f[f'{feature_id}_features'][()]
+        except:
+            print(f"Failed while accessing {feature_id}")
+            sys.exit()
         caption = self.targets[idx]
 
         if feature.shape[0] < self.max_detections:

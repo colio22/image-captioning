@@ -46,7 +46,7 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         optimizer.step()
 
         if batch_idx % print_idx == 0: # Log output 10 times per epoch
-            print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}]') 
+            print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}] Loss: {loss.item():.3f}') 
 
         train_loss.append(loss.item()) # Add loss of batch to list
         
@@ -83,6 +83,7 @@ def test(model: nn.Module,
     # Find average loss
     test_loss /= (len(test_loader.dataset) / test_loader.batch_size)
     test_stat = {'loss': test_loss}
+    print(f"Test result on epoch {epoch}: Avg loss: {test_stat['loss']:.3f}")
 
     return test_stat
 
@@ -168,10 +169,14 @@ def parse_args():
 def main(args):
     print("Image Captioning Project")
 
+    number_of_train_samples = 18000
+    number_of_test_samples = int(number_of_train_samples * 0.2)
+
+
     # Create datasets from HDF file
     transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
-    train_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_train2014.json', transform, limit=18000)
-    test_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_val2014.json', transform)
+    train_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_train2014.json', transform, limit=number_of_train_samples)
+    test_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_val2014.json', transform, limit=number_of_test_samples)
 
     # Create master list mapping captions to image ID
     reference_map = test_dataset.get_ref_dict()

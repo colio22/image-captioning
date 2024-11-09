@@ -166,12 +166,13 @@ def parse_args():
 
 def main(args):
     print("Image Captioning Project")
-    print(args.features_path)
 
+    # Create datasets from HDF file
     transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
     train_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_train2014.json', transform)
     test_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_val2014.json', transform)
 
+    # Create master list mapping captions to image ID
     reference_map = test_dataset.get_ref_dict()
 
     print(train_dataset)
@@ -179,38 +180,46 @@ def main(args):
     batch_size_train = args.batch_size
     batch_size_test = args.batch_size
 
+    # Create dataloaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size_test, shuffle=False)
 
     print(train_loader)
 
+    # Create tokenizer for input string
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     vocab_size = tokenizer.vocab_size
 
+    # Clear memory from GPU because we will be using most of it
     torch.cuda.empty_cache()
  
+    # Instantiate GET and put it on GPU
     model = GlobalEnhancedTransformer(vocab_size, 2048, 512, 64, 512, 8, 3, 0.1)
     model = model.to(device)
 
+    # Select optimizer and loss function
     optim = Adam(model.parameters(), lr=0.1, betas=(0.9, 0.98))
     criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['[PAD]'])
 
+    # Train and test for desired number of epochs
     max_epoch = 1
-
     for epoch in range(1, max_epoch+1):
         loss = train(model, criterion, optim, train_loader, tokenizer, epoch)
         result = test(model, criterion, test_loader, tokenizer, epoch)
 
+    # Save copy of model to drive
     print("Saving model...")
     torch.save(model.state_dict(), f'/content/drive/MyDrive/Colab Notebooks/ece570_project/{args.exp_name}.pth')
 
+    # Generate captions for test dataset and map each to an image id
     generations = generate_test_strings(model, test_loader, tokenizer)
 
+    # Save caption generations
     with open('/content/drive/MyDrive/Colab Notebooks/ece570_project/generations.json', 'w') as ref_file: 
         ref_file.write(json.dumps(generations))
 
+    # Evaluate model perfromance with captioning metrics
     evaluate(generations, reference_map)
-
 
 
 if __name__ == "__main__":

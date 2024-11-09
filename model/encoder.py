@@ -5,7 +5,7 @@ from model.attention import MultiHeadSelfAttention
 import tensorflow as tf
 
 class GlobalEncoderLayer(nn.Module):
-    def __init__(self, d_model=512, d_k =64, d_v=64, num_heads=8, drop=0.1):
+    def __init__(self, d_model=512, d_k=64, d_v=512, num_heads=8, drop=0.1):
         super(GlobalEncoderLayer, self).__init__()
         self.d_model=d_model        # Feature dimension
         self.d_k=d_k                # Key and Query attnetion dimension
@@ -73,6 +73,7 @@ class GlobalEnhancedEncoder(nn.Module):
         # Pass global feature to next layer LSTM
         g, (h, c) = self.initial_lstm(g.type(torch.float32), (h, c))
         # Pass total input to next encoder layer
+        print(f'Initial X: {x.shape}. About to use din={self.feature_size}, dk={self.d_k}, dv={self.d_model}')
         x = self.initial_encode(x, batch_size, mask)
         
 

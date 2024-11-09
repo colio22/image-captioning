@@ -26,9 +26,10 @@ class GlobalEncoderLayer(nn.Module):
         return x
     
 class GlobalEnhancedEncoder(nn.Module):
-    def __init__(self, num_layers, d_model, d_k, d_v, num_heads, drop):
+    def __init__(self, num_layers, feature_size, d_model, d_k, d_v, num_heads, drop):
         super(GlobalEnhancedEncoder, self).__init__()
         self.num_layers = num_layers    # Number of encoder layers
+        self.feature_size = feature_size # Dimension of input features
         self.d_model = d_model          # Feature size
         self.d_k = d_k                  # Query and Key attention dims
         self.d_v = d_v                  # Value attention dims
@@ -36,27 +37,40 @@ class GlobalEnhancedEncoder(nn.Module):
         self.drop = drop                # Percent to drop out
 
         # Encoder Layers
-        self.encode_layers = nn.ModuleList([GlobalEncoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(num_layers)])
+        self.initial_encode = GlobalEncoderLayer(feature_size, d_k, d_model, num_heads, drop)
+        self.encode_layers = nn.ModuleList([GlobalEncoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(num_layers-1)])
         # LSTM Blocks for global memory
-        self.lstm_layers = nn.ModuleList([nn.LSTM(input_size=d_model*2, hidden_size=d_model, num_layers=2, batch_first=True) for i in range(num_layers)])
-        # Output LSTM block
-        self.final_lstm = nn.LSTM(input_size=d_model*2, hidden_size=d_model, num_layers=2, batch_first=True)
+        self.initial_lstm = nn.LSTM(input_size=feature_size*2, hidden_size=d_model, num_layers=1, batch_first=True)
+        self.lstm_layers = nn.ModuleList([nn.LSTM(input_size=d_model*2, hidden_size=d_model, num_layers=1, batch_first=True) for i in range(num_layers-1)])
+        self.final_lstm = nn.LSTM(input_size=d_model*2, hidden_size=d_model, num_layers=1, batch_first=True)
 
     def forward(self, x, batch_size, mask=None):
         if batch_size > 1:
             g = torch.rand([batch_size, 1, self.d_model], device=x.device) # Initialize LSTM with random global feature
-            h = torch.zeros([2, batch_size, self.d_model], device=x.device)
-            c = torch.zeros([2, batch_size, self.d_model], device=x.device)
+            h = torch.zeros([1, batch_size, self.d_model], device=x.device)
+            c = torch.zeros([1, batch_size, self.d_model], device=x.device)
             # Isolate global feature to feed into LSTM
             index = torch.ones([batch_size, 1, self.d_model], device=x.device)
             index = (len(x)-1)*index
         else:
             g = torch.rand([1, self.d_model], device=x.device) # Initialize LSTM with random global feature
-            h = torch.zeros([2, self.d_model], device=x.device)
-            c = torch.zeros([2, self.d_model], device=x.device)
+            h = torch.zeros([1, self.d_model], device=x.device)
+            c = torch.zeros([1, self.d_model], device=x.device)
             # Isolate global feature to feed into LSTM
             index = torch.ones([1, self.d_model], device=x.device)
             index = (len(x)-1)*index
+        
+        #Initial encoder and LSTM
+        g_in = torch.gather(x, 0, index.long())  # Use 0 for the dim argument
+
+        # Concatenate with output of last LSTM layer to feed to next block
+        g = torch.cat((g, g_in), -1)
+
+        # Pass global feature to next layer LSTM
+        g, (h, c) = self.initial_lstm(g.type(torch.float32), (h, c))
+        # Pass total input to next encoder layer
+        x = self.initial_encode(x, batch_size, mask)
+        
 
         # For each encoder layer and LSTM block
         for l, e in zip(self.lstm_layers, self.encode_layers):

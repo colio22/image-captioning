@@ -27,10 +27,9 @@ class DecoderLayer(nn.Module):
 
 
 class GlobalAdaptiveDecoder(nn.Module):
-    def __init__(self, vocab_size, max_len, padding, num_layers, d_model, d_k, d_v, num_heads, drop):
+    def __init__(self, vocab_size, padding, num_layers, d_model, d_k, d_v, num_heads, drop):
         super(GlobalAdaptiveDecoder, self).__init__()
         self.vocab_size = vocab_size    # Number of words in vocabulary
-        self.max_len = max_len          # Maximum length of caption sequence
         self.padding = padding          # Padding used for embedding words
         self.num_layers = num_layers    # Number of decode layers
         self.d_model = d_model          # Dimensionality of decoder

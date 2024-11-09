@@ -4,10 +4,11 @@ from torch.utils.data import DataLoader, Dataset
 import numpy as np
 from pycocotools.coco import COCO
 import h5py
+import random
 
 
 class COCODataset(Dataset):
-    def __init__(self, detection_path, annotation_file, transform=None, max_detections=50):
+    def __init__(self, detection_path, annotation_file, transform=None, max_detections=50, limit=0):
         self.detection_path = detection_path
         self.annotation_file = annotation_file
         self.transform = transform
@@ -26,6 +27,17 @@ class COCODataset(Dataset):
             # self.data.append(f[f'{img_id}_features'][()])
             self.data.append(id_map.anns[id]['image_id'])
             self.targets.append(id_map.anns[id]['caption'])
+
+        if limit != 0:
+            slim_data = []
+            slim_targets = []
+            start_idx = random.randrange(len(self.data) - limit)
+            for i in range(start_idx, start_idx+limit):
+                slim_data.append(self.data[i])
+                slim_targets.append(self.targets[i])
+
+            self.data = slim_data
+            self.targets = slim_targets
 
     def get_ref_dict(self):
         ref = {}

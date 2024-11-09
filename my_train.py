@@ -170,13 +170,14 @@ def main(args):
 
     # Create datasets from HDF file
     transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
-    train_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_train2014.json', transform)
+    train_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_train2014.json', transform, limit=18000)
     test_dataset = COCODataset(args.features_path,  f'{args.annotation_folder}/captions_val2014.json', transform)
 
     # Create master list mapping captions to image ID
     reference_map = test_dataset.get_ref_dict()
 
-    print(train_dataset)
+    print(f'Training Dataset size: {len(train_dataset)}')
+    print(f'Test Dataset size: {len(test_dataset)}')
 
     batch_size_train = args.batch_size
     batch_size_test = args.batch_size

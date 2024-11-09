@@ -215,7 +215,7 @@ def main(args):
     model = model.to(device)
 
     # Select optimizer and loss function
-    optim = Adam(model.parameters(), lr=0.1, betas=(0.9, 0.98))
+    optim = Adam(model.parameters(), lr=0.01, betas=(0.9, 0.98))
     # criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['[PAD]'])
     criterion = nn.CrossEntropyLoss(reduction="none")
 

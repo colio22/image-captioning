@@ -48,7 +48,11 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         # loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
         output = output[:,:-1].contiguous()
         loss = loss_fn(output.transpose(1, 2).float(), expected_out.transpose(1, 2).float())   # Calculate loss
-        loss.backward()        # Update weights
+
+        # scaler.scale(loss).backward()
+        # scaler.step(optimizer)
+        # scaler.update()
+        loss.sum().backward()        # Update weights
         optimizer.step()
 
         if batch_idx % print_idx == 0: # Log output 10 times per epoch

@@ -74,9 +74,7 @@ class SelfAttention(nn.Module):
         v = self.v_layer(X.float())   # Connect input to Values
 
         # Use existing self-attention function to attend output
-        print(f'Before attention: q={q.shape}, k={k.shape}, v={v.shape}')
         out, weight = self.attention_score(q, k, v, batch_size, mask)
-        print(f'After attention: X={out.shape}')
         return out
 
 
@@ -151,9 +149,7 @@ class MultiHeadSelfAttention(nn.Module):
           # Concatenate output of layer with previous outputs
           outputs = torch.cat((outputs, l.forward(X, batch_size, mask)), -1)
         # Pass concatenated matrix through fully-connected output layer
-        print(f"After attention, before ff: X={outputs.shape}")
         outputs = self.out(outputs)
-        print(f"After attention, after ff: X={outputs.shape}")
         return outputs
 
 class MultiHeadCrossAttention(nn.Module):

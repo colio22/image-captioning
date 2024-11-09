@@ -37,6 +37,7 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         tokens = tokenizer(target, padding=True, truncation=True, return_tensors='pt')
         token_ids = tokens['input_ids']
         token_ids = token_ids.to(device)
+        print(f"Token size: {token_ids.shape[0]}")
 
         optimizer.zero_grad()  # Initialize gradients to 0
 

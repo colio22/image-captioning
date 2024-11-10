@@ -52,7 +52,9 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, batch_size=50, epo
         optimizer.step()
 
         if batch_idx % print_idx == 0: # Log output 10 times per epoch
+            print('\n---------------------------------')
             print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}] Loss: {loss.sum().item():.3f}') 
+            print('---------------------------------\n')
 
         train_loss.append(loss.sum().item()) # Add loss of batch to list
 
@@ -71,7 +73,6 @@ def generate_test_strings(model, features, ids, tokenizer, caption_map):
     Returns a dictionary of image ids and captions generated.
     """
 
-    print("Generating Captions for each test image to prepare for metric evaluation")
     model.eval()        # Put model in evaluation mode
 
     # Turn gradients off to begin testing
@@ -127,7 +128,8 @@ def test(model: nn.Module,
 
     # Begin testing
     with torch.no_grad():     # Turn gradients off for testing
-        for images, targets, ids in test_loader:
+        for batch_idx, (images, targets, ids) in enumerate(test_loader):
+            print(f"Batch {batch_idx} of {int(len(test_loader)) + 1}")
             # Put input data on GPU
             images = images.to(device)
             # Tokenize input sequence
@@ -262,8 +264,11 @@ def main(args):
     # generations = generate_test_strings(model, test_loader, tokenizer)
 
     # Save caption generations
-    with open(f'{args.save_path}/generations.json', 'w') as ref_file: 
+    with open(f'{args.save_path}/generations_{args.exp_name}.json', 'w') as ref_file: 
         ref_file.write(json.dumps(result['predictions']))
+
+    with open(f'{args.save_path}/references_{args.exp_name}.json', 'w') as ref_file: 
+        ref_file.write(json.dumps(reference_map))
 
     # Evaluate model perfromance with captioning metrics
     evaluate(result['predictions'], reference_map)

@@ -144,8 +144,10 @@ def test(model, loss_fn, test_loader, tokenizer, batch_size=50, epoch=0):
             loss = loss_fn(output.transpose(1, 2).float(), expected_out.transpose(1, 2).float())   # Calculate loss
             test_loss += loss.sum().item()  # Track total loss
 
-            # Generate actual string captions
-            test_predictions = generate_test_strings(model, images, ids, tokenizer, test_predictions)
+            # Only generate captions for 2 batches because it is very heavy
+            if batch_idx < 2:
+                # Generate actual string captions
+                test_predictions = generate_test_strings(model, images, ids, tokenizer, test_predictions)
 
     # Find average loss
     test_loss /= (len(test_loader.dataset) / test_loader.batch_size)

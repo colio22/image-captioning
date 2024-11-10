@@ -262,6 +262,9 @@ def main(args):
     model = GlobalEnhancedTransformer(vocab_size, 2048, 512, 64, 512, 8, 3, 0.1)
     model = model.to(device)
 
+    # Data is too heavy to do multiple epochs
+    max_epoch = 1
+
     # If no model provided, proceed with training
     if args.load_model == None:
         # Create dataloaders
@@ -276,7 +279,6 @@ def main(args):
 
         # Train for desired number of epochs
         print("Starting training...\n")
-        max_epoch = 1
         for epoch in range(1, max_epoch+1):
             loss = train(model, criterion, optim, train_loader, tokenizer, batch_size_train, epoch)
 

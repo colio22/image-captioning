@@ -58,7 +58,6 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, batch_size=50, epo
 
         train_loss.append(loss.sum().item()) # Add loss of batch to list
 
-        break   # DevOnly
         
     return train_loss
 

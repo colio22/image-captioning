@@ -84,23 +84,23 @@ class COCODataset(Dataset):
             # This failsafe measure was introduced because there are a handful
             # of image IDs that do not have an associated entry in the feature
             # detection file.
-            valid_key = False
-            while (valid_key == False) and (idx < self.size):
-                feature_id = self.data[idx]
-                try:
+            # valid_key = False
+            # while (valid_key == False) and (idx < self.size):
+                    feature_id = self.data[idx]
+                # try:
                     feature = f[f'{feature_id}_features'][()]
-                    valid_key = True
-                except KeyError:    # If error encountered, skip and move to next line until valid
-                    print(f"Failed while accessing {feature_id}. Skipping to next feature in list.")
-                    valid_key = False
-                    idx += 1
-
+                    # valid_key = True
+                # except KeyError:    # If error encountered, skip and move to next line until valid
+                    # print(f"Failed while accessing {feature_id}. Skipping to next feature in list.")
+                    # valid_key = False
+                    # idx += 1
+# 
                     # Wrap around
-                    if idx >= len(self.data):
-                        idx = 0
+                    # if idx >= len(self.data):
+                        # idx = 0
 
             # Save caption of idx
-            caption = self.targets[idx]
+        caption = self.targets[idx]
 
         # Pad entry to 50 x 2048 shape
         if feature.shape[0] < self.max_detections:

@@ -265,17 +265,17 @@ def main(args):
     # Data is too heavy to do multiple epochs
     max_epoch = 1
 
+    # Select optimizer and loss function
+    # Adam parameters based on the work of Cornia et al. in the
+    # M2 Transformer
+    optim = Adam(model.parameters(), lr=0.01, betas=(0.9, 0.98))
+    criterion = nn.CrossEntropyLoss(reduction="none")
+
     # If no model provided, proceed with training
     if args.load_model == None:
         # Create dataloaders
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
         print(train_loader)
-
-        # Select optimizer and loss function
-        # Adam parameters based on the work of Cornia et al. in the
-        # M2 Transformer
-        optim = Adam(model.parameters(), lr=0.01, betas=(0.9, 0.98))
-        criterion = nn.CrossEntropyLoss(reduction="none")
 
         # Train for desired number of epochs
         print("Starting training...\n")

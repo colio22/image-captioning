@@ -50,10 +50,6 @@ class COCODataset(Dataset):
             self.data = slim_data
             self.targets = slim_targets
 
-            if isinstance(self.targets[0], list):
-                print("Captions already a list!")
-            elif isinstance(self.targets[0], str):
-                print("Captions come in strings")
 
     def get_ref_dict(self):
         """
@@ -86,7 +82,8 @@ class COCODataset(Dataset):
             # of image IDs that do not have an associated entry in the feature
             # detection file.
             valid_key = False
-            while not valid_key and idx < len(self.data):
+            while (valid_key == False) and (idx < len(self.data)):
+                print(f'In loop for {idx}')
                 feature_id = self.data[idx]
                 try:
                     feature = f[f'{feature_id}_features'][()]

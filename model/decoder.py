@@ -6,6 +6,10 @@ import math
 
 
 class DecoderLayer(nn.Module):
+    """
+    Single layer to be used in decoder
+    """
+
     def __init__(self, d_model, d_k, d_v, num_heads, drop):
         super(DecoderLayer, self).__init__()
         self.d_model = d_model      # Size of features
@@ -20,13 +24,28 @@ class DecoderLayer(nn.Module):
         self.cross_att = MultiHeadCrossAttention(d_model, d_k, d_v, num_heads, None)
 
     def forward(self, x, K, V, g, batch_size, mask=None):
+        """
+        Forward pass of text sequence and encoder outputs through decoder layer
+            x: Input sequence to use as attention query
+            K: Encoder output to use as attention keys
+            V: Encoder output to use as attention values
+            g: Global feature output from LSTM
+            batch_size: Batch size of all input tensors
+        """
+
+        # Apply self attention
         x = self.self_att(x, batch_size, mask)           # In: seq_len x d_k. Out: seq_len x d_v
+        # Apply cross attention
         x = self.cross_att(x, K, V, g, batch_size) # In: seq_len x d_k. Out: seq_len x d_v
 
         return x
 
 
 class GlobalAdaptiveDecoder(nn.Module):
+    """
+    Decoder block of the Global Adaptive Decoder
+    """
+
     def __init__(self, vocab_size, padding, num_layers, d_model, d_k, d_v, num_heads, drop):
         super(GlobalAdaptiveDecoder, self).__init__()
         self.vocab_size = vocab_size    # Number of words in vocabulary
@@ -47,11 +66,17 @@ class GlobalAdaptiveDecoder(nn.Module):
 
     def get_positional_encoding(self, d_model, seq_len, device):
         """
-        Generate a matrix where each row corresponds to the positional encoding for a 
+        Generate a matrix where each row corresponds to the sinusoidal positional encoding
+            d_model: Model dimensionality
+            seq_len: Length of given text sequence
+            device: GPU device to use
+
+        Code re-used from assignment 4
         """
 
         # Initialize empty matrix to hold positional encodings
         pe = torch.zeros([seq_len, d_model], device=device)
+
         # Iterate over entire encoding matrix
         for i in range(0, seq_len):  # Loop over each row
           for j in range(0, int(d_model/2)): # Loop over half of dimensions
@@ -59,11 +84,22 @@ class GlobalAdaptiveDecoder(nn.Module):
             pe[i][2*j] = math.sin((i)/pow(10000, (2*j)/d_model))
             # Apply cos encoding to (2*dimension)+1 index of matrix
             pe[i][(2*j)+1] = math.cos((i)/pow(10000, (2*j)/d_model))
+
         return pe
 
     def create_mask(self, seq_len, device):
+        """
+        Creates a mask to use in attention that prevents items
+        from 'seeing the future.'
+            seq_len: Length of input sequence
+            device: GPU device to use
+
+        Code re-used from assignment 4
+        """
+        
         # Create empty bool mask
         mask = torch.zeros([seq_len, seq_len], device=device, dtype=torch.bool)
+
         # Loop over entire mask
         for i in range(0, seq_len):
           for j in range(0, seq_len):
@@ -71,13 +107,26 @@ class GlobalAdaptiveDecoder(nn.Module):
               mask[i][j] = False
             else:       # Else set to true to mark for keeping
               mask[i][j] = True
+
         return mask
 
     def forward(self, x, K, V, g, batch_size):
+        """
+        Forward pass of input text sequence and encoder output through entire decoder.
+            x: Input text sequence, tokenized
+            K: Output of encoder
+            V: Output of encoder
+            g: global feature, output of LSTM network
+            batch_size: Batch size of all input tensors
+        """
+        
         # Embed and encode word sequence
         out = self.word_emb(x) + self.get_positional_encoding(self.d_model, x.size(1), x.device)
+
+        # If inputs not batched, remove batch dimension
         if batch_size <= 1:
            out = torch.squeeze(out, dim=0)
+
         # Create a mask to prevent things from the future
         mask = self.create_mask(x.size(1), x.device)
 

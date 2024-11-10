@@ -3,8 +3,6 @@ import torch
 import torchvision
 from torch import nn
 from torch.optim import Adam
-import pickle
-import os
 from data.dataset import COCODataset
 from transformers import AutoTokenizer
 from model.transformer import GlobalEnhancedTransformer
@@ -13,6 +11,7 @@ import json
 import torch.nn.functional as F
 
 
+# GPU Device instance to be used throughout project
 device = torch.device('cuda')
 
 
@@ -37,15 +36,19 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, batch_size=50, epo
         tokens = tokenizer(target, padding=True, truncation=True, return_tensors='pt')
         token_ids = tokens['input_ids']
         token_ids = token_ids.to(device)
-        # print(f"Token size: {token_ids.shape[0]}")
+
+        # Generate 1-hot version of input showing which token of vocabulary to predict
+        # Take from index 1 to end because token 0 of input should produce token 1
+        # of expected_out
         expected_out = F.one_hot(token_ids[:,1:], num_classes=tokenizer.vocab_size)
-        expected_out = expected_out.contiguous()
+        expected_out = expected_out.contiguous()    # Contiguous memory because of weird error
 
         optimizer.zero_grad()  # Initialize gradients to 0
 
         output = model(img, token_ids, batch_size)    # Put input batch through model
-        # loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
-        output = output[:,:-1].contiguous()
+
+        # Discard last token of output sequence as garbage
+        output = output[:,:-1].contiguous() # contiguous mem because of weird error
         loss = loss_fn(output.transpose(1, 2).float(), expected_out.transpose(1, 2).float())   # Calculate loss
 
         loss.sum().backward()        # Update weights
@@ -70,53 +73,47 @@ def generate_test_strings(model, features, ids, tokenizer, caption_map):
         data: The test dataset to be used
         tokenizer: Automatic tokenizer object used to brek apart input sequence
     Returns a dictionary of image ids and captions generated.
+
+    Credit to Ditria for technique used to generate tokens
+    (https://github.com/LukeDitria/pytorch_tutorials/blob/main/section14_transformers/solutions/Pytorch5_Transformer_Image_Captioning_Pytorch_Layers.ipynb)
     """
 
     model.eval()        # Put model in evaluation mode
 
     # Turn gradients off to begin testing
     with torch.no_grad():
-        # for features, targets, ids in data:
-            # features = features.to(device)      # Put image on GPU
+        for feature, id in zip(features, ids):
+            enc_output, g_out = model.encoder(feature, batch_size=1)   # Put batch through model
 
-            # Iterate over every feature and id in batch
-            for feature, id in zip(features, ids):
-                enc_output, g_out = model.encoder(feature, batch_size=1)   # Put batch through model
+            # Initialize input sequence with 'start of sentence' key
+            predictions = [101*torch.ones([1,1], device=device).long()]
 
-                # Initialize input sequence with 'start of sentence' key
-                predictions = [101*torch.ones([1,1], device=device).long()]
+            # Allow for 50 words before terminating
+            for i in range(50):
+                input_tokens = torch.cat(predictions, 1).to(device) # Add latest prediction to input list
 
-                # Allow for 50 words before terminating
-                for i in range(50):
-                    input_tokens = torch.cat(predictions, 1).to(device) # Add latest prediction to input list
+                # Feed current sequence through model
+                pred = model.decoder(input_tokens, enc_output, enc_output, g_out, batch_size=1)
 
-                    # Feed current sequence through model
-                    pred = model.decoder(input_tokens, enc_output, enc_output, g_out, batch_size=1)
+                # Use probability distribution to select which word comes next
+                dist = torch.distributions.Categorical(logits=pred[:, -1] / 0.5)
+                predicted_token = dist.sample().reshape(1, 1)
+                predictions.append(predicted_token)
 
-                    # Use probability distribution to select which word comes next
-                    dist = torch.distributions.Categorical(logits=pred[:, -1] / 0.5)
-                    predicted_token = dist.sample().reshape(1, 1)
-                    predictions.append(predicted_token)
+                # Stop generating caption when end of sentence key is produced
+                if predicted_token.item() == 102:
+                    break
 
-                    # Stop generating caption when end of sentence key is produced
-                    if predicted_token.item() == 102:
-                        break
-
-                # Decode tokens and add to dictionary
-                pred_text = torch.cat(predictions, 1)
-                pred_text_strings = tokenizer.decode(pred_text[0], skip_special_tokens=True)
-                pred_text = "".join(pred_text_strings)
-                caption_map[f'{id}'] = pred_text
+            # Decode tokens and add to dictionary
+            pred_text = torch.cat(predictions, 1)
+            pred_text_strings = tokenizer.decode(pred_text[0], skip_special_tokens=True)
+            pred_text = "".join(pred_text_strings)
+            caption_map[f'{id}'] = pred_text
 
     return caption_map
 
 
-def test(model: nn.Module,
-        loss_fn: nn.modules.loss._Loss,
-        test_loader: torch.utils.data.DataLoader,
-        tokenizer,
-        batch_size=50,
-        epoch: int=0):
+def test(model, loss_fn, test_loader, tokenizer, batch_size=50, epoch=0):
     """
     Tests a given model against a test dataset.
     """
@@ -136,18 +133,19 @@ def test(model: nn.Module,
             token_ids = tokens['input_ids']
             token_ids = token_ids.to(device)
 
+            # Use 1-hot encoding to transform expected token to place in vocabulary
             expected_out = F.one_hot(token_ids[:,1:], num_classes=tokenizer.vocab_size)
-            expected_out = expected_out.contiguous()
+            expected_out = expected_out.contiguous() # Contiguous because of weird error
 
             output = model(images, token_ids, batch_size)   # Put batch through model
-            # loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
-            output = output[:,:-1].contiguous()
+
+            # Throw out last token predicted as garbage
+            output = output[:,:-1].contiguous() # Continous because of weird error
             loss = loss_fn(output.transpose(1, 2).float(), expected_out.transpose(1, 2).float())   # Calculate loss
-            test_loss += loss.sum().item()
+            test_loss += loss.sum().item()  # Track total loss
 
+            # Generate actual string captions
             test_predictions = generate_test_strings(model, images, ids, tokenizer, test_predictions)
-
-            
 
     # Find average loss
     test_loss /= (len(test_loader.dataset) / test_loader.batch_size)
@@ -155,7 +153,6 @@ def test(model: nn.Module,
     print(f"Test result on epoch {epoch}: Avg loss: {test_stat['loss']:.3f}")
 
     return test_stat
-
 
 
 
@@ -168,20 +165,23 @@ def evaluate(generations, references):
 
     print("Evaluating CIDEr...")
 
-    # Ensure dictionaries have same keys, since it is possible 
-    # for items in dataset to be skipped
+    # Ensure dictionaries have same keys
     possibly_missing_data = generations.keys()
     to_delete = []
     for key in references.keys():
       if key not in possibly_missing_data:
         to_delete.append(key)
 
+    # Delete keys that do not match between reference and generated
     for key in to_delete:
         del references[key]
 
+    # Cider expects captions as lists so we convert the strings to
+    # lists of strings here
     cider_refs = {key: [val] for key, val in references.items()}
     cider_preds = {key: [val] for key, val in generations.items()}
 
+    # Compute score
     cider_eval = Cider()
     cider_score, _ = cider_eval.compute_score(cider_refs, cider_preds)
 
@@ -189,8 +189,8 @@ def evaluate(generations, references):
     print(f" CIDEr Score: {cider_score}")
     print("==============================\n")
 
+    # Print out 5 example captions and what the input was
     print("Example generations:")
-
     i = 0
     for gen, ref in zip(generations, references):
         print(f"\nExpected Caption: {ref}")
@@ -204,6 +204,8 @@ def evaluate(generations, references):
 def parse_args():
     """
     Parses given command-line arguments
+
+    Credit to Cornia et al. and the M2 Transformer repository for this code.
     """
 
     parser = argparse.ArgumentParser(description='Global Enhanced Transformer')
@@ -220,8 +222,13 @@ def parse_args():
 
 
 def main(args):
+    """
+    Main method
+    """
+
     print("Image Captioning Project")
 
+    # Limits on dataset for manageable train time
     number_of_train_samples = 18000
     number_of_test_samples = int(number_of_train_samples * 0.1)
 
@@ -247,6 +254,8 @@ def main(args):
     print(train_loader)
 
     # Create tokenizer for input string
+    # Credit to Ditria for tokenizing method used
+    # (https://github.com/LukeDitria/pytorch_tutorials/blob/main/section14_transformers/solutions/Pytorch5_Transformer_Image_Captioning_Pytorch_Layers.ipynb)
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     vocab_size = tokenizer.vocab_size
 
@@ -257,13 +266,15 @@ def main(args):
     model = GlobalEnhancedTransformer(vocab_size, 2048, 512, 64, 512, 8, 3, 0.1)
     model = model.to(device)
 
+    # If no model provided, proceed with training
     if args.load_model == None:
         # Select optimizer and loss function
+        # Adam parameters based on the work of Cornia et al. in the
+        # M2 Transformer
         optim = Adam(model.parameters(), lr=0.01, betas=(0.9, 0.98))
-        # criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['[PAD]'])
         criterion = nn.CrossEntropyLoss(reduction="none")
 
-        # Train and test for desired number of epochs
+        # Train for desired number of epochs
         print("Starting training...\n")
         max_epoch = 1
         for epoch in range(1, max_epoch+1):
@@ -272,19 +283,17 @@ def main(args):
         # Save copy of model to drive
         print("Training complete. Saving model...\n")
         torch.save(model.state_dict(), f'{args.save_path}/{args.exp_name}.pth')
-    else:
+    else:   # If model provided, skip training and load
         print("Loading model...")
         model.load_state_dict(torch.load(args.load_model, weights_only=True))
 
+    # Test for desired number of epochs
     print("Beginning tests...\n")
     for epoch in range(1, max_epoch+1):
         result = test(model, criterion, test_loader, tokenizer, batch_size_test, epoch)
         print("Testing complete.\n")
 
-    # # Generate captions for test dataset and map each to an image id
-    # generations = generate_test_strings(model, test_loader, tokenizer)
-
-    # Evaluate model perfromance with captioning metrics
+    # Evaluate model perfromance with CIDEr metric
     evaluate(result['predictions'], reference_map)
 
     # Save caption generations

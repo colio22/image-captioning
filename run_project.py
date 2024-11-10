@@ -57,8 +57,6 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, batch_size=50, epo
             print('---------------------------------\n')
 
         train_loss.append(loss.sum().item()) # Add loss of batch to list
-
-        break   # DevOnly
         
     return train_loss
 
@@ -109,8 +107,6 @@ def generate_test_strings(model, features, ids, tokenizer, caption_map):
                 pred_text = "".join(pred_text_strings)
                 caption_map[f'{id}'] = pred_text
 
-                print(f"Finished predicting ID {id} as {pred_text}")
-
     return caption_map
 
 
@@ -150,8 +146,6 @@ def test(model: nn.Module,
 
             test_predictions = generate_test_strings(model, images, ids, tokenizer, test_predictions)
 
-            break   # DevOnly
-
             
 
     # Find average loss
@@ -172,10 +166,26 @@ def evaluate(generations, references):
     """
 
     print("Evaluating CIDEr...")
+
+    # Ensure dictionaries have same keys, since it is possible 
+    # for items in dataset to be skipped
+    possibly_missing_data = generations.keys()
+    to_delete = []
+    for key in references.keys():
+      if key not in possibly_missing_data:
+        to_delete.append(key)
+
+    for key in to_delete:
+        del references[key]
+
+    cider_refs = {key: [val] for key, val in references.items()}
+    cider_preds = {key: [val] for key, val in generations.items()}
+
     cider_eval = Cider()
-    cider_score, _ = cider_eval.compute_score(references, generations)
+    cider_score, _ = cider_eval.compute_score(cider_refs, cider_preds)
+
     print("\n==============================")
-    print(f"= CIDEr Score: {cider_score} =")
+    print(f" CIDEr Score: {cider_score}")
     print("==============================\n")
 
     print("Example generations:")
@@ -184,6 +194,10 @@ def evaluate(generations, references):
     for gen, ref in zip(generations, references):
         print(f"\nExpected Caption: {ref}")
         print(f"Generated Caption: {gen}")
+        i += 1
+
+        if i == 5:
+            break
 
 
 def parse_args():
@@ -269,15 +283,15 @@ def main(args):
     # # Generate captions for test dataset and map each to an image id
     # generations = generate_test_strings(model, test_loader, tokenizer)
 
-    # Save caption generations
-    # with open(f'{args.save_path}/generations_{args.exp_name}.json', 'w') as ref_file: 
-    #     ref_file.write(json.dumps(result['predictions']))
-
-    # with open(f'{args.save_path}/references_{args.exp_name}.json', 'w') as ref_file: 
-    #     ref_file.write(json.dumps(reference_map))
-
     # Evaluate model perfromance with captioning metrics
     evaluate(result['predictions'], reference_map)
+
+    # Save caption generations
+    with open(f'{args.save_path}/generations_{args.exp_name}.json', 'w') as ref_file: 
+        ref_file.write(json.dumps(result['predictions']))
+
+    with open(f'{args.save_path}/references_{args.exp_name}.json', 'w') as ref_file: 
+        ref_file.write(json.dumps(reference_map))
 
 
 if __name__ == "__main__":

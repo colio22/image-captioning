@@ -29,11 +29,11 @@ class COCODataset(Dataset):
             self.data.append(id_map.anns[id]['image_id'])
             self.targets.append(id_map.anns[id]['caption'])
 
-        if limit != 0:
+        if limit != 0 and limit < len(self.data):
             slim_data = []
             slim_targets = []
             start_idx = random.randrange(len(self.data) - limit)
-            for i in range(start_idx, start_idx+limit):
+            for i in range(limit):
                 slim_data.append(self.data[i])
                 slim_targets.append(self.targets[i])
 
@@ -51,15 +51,21 @@ class COCODataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        f = h5py.File(self.detection_path, 'r')
+        valid_key = False
+        while not valid_key and idx < len(self.data):
+            with h5py.File(self.detection_path, 'r') as f:
+                feature_id = self.data[idx]
+                try:
+                    feature = f[f'{feature_id}_features'][()]
+                    valid_key = True
+                except KeyError:
+                    print(f"Failed while accessing {feature_id}. Skipping to next feature in list.")
+                    valid_key = False
+                    idx += 1
+                    if idx >= len(self.data):
+                        idx = 0
 
-        feature_id = self.data[idx]
-        try:
-            feature = f[f'{feature_id}_features'][()]
-        except:
-            print(f"Failed while accessing {feature_id}")
-            sys.exit()
-        caption = self.targets[idx]
+            caption = self.targets[idx]
 
         if feature.shape[0] < self.max_detections:
             padding = np.zeros((self.max_detections - feature.shape[0], feature.shape[1]))

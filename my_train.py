@@ -14,10 +14,9 @@ import torch.nn.functional as F
 
 
 device = torch.device('cuda')
-batch_size = 50
 
 
-def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
+def train(model, loss_fn, optimizer, train_loader, tokenizer, batch_size=50, epoch=0):
     """
     Trains a given model using a given optimizer and los function.
     """
@@ -49,9 +48,6 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
         output = output[:,:-1].contiguous()
         loss = loss_fn(output.transpose(1, 2).float(), expected_out.transpose(1, 2).float())   # Calculate loss
 
-        # scaler.scale(loss).backward()
-        # scaler.step(optimizer)
-        # scaler.update()
         loss.sum().backward()        # Update weights
         optimizer.step()
 
@@ -59,46 +55,13 @@ def train(model, loss_fn, optimizer, train_loader, tokenizer, epoch=0):
             print(f'Epoch {epoch}: [{batch_idx*len(img)}/{len(train_loader.dataset)}] Loss: {loss.sum().item():.3f}') 
 
         train_loss.append(loss.sum().item()) # Add loss of batch to list
+
+        break   # DevOnly
         
     return train_loss
 
 
-def test(model: nn.Module,
-        loss_fn: nn.modules.loss._Loss,
-        test_loader: torch.utils.data.DataLoader,
-        tokenizer,
-        epoch: int=0):
-    """
-    Tests a given model against a test dataset.
-    """
-
-    model.eval() # Set model to test mode
-    test_loss = 0         # Initialize total loss of test to 0
-    test_predictions = {} # List of all generations
-
-    # Begin testing
-    with torch.no_grad():     # Turn gradients off for testing
-        for images, targets, ids in test_loader:
-            # Put input data on GPU
-            images = images.to(device)
-            # Tokenize input sequence
-            tokens = tokenizer(targets, padding=True, truncation=True, return_tensors='pt')
-            token_ids = tokens['input_ids']
-            token_ids = token_ids.to(device)
-
-            output = model(images, token_ids, batch_size)   # Put batch through model
-            loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
-            test_loss += loss.item()
-
-    # Find average loss
-    test_loss /= (len(test_loader.dataset) / test_loader.batch_size)
-    test_stat = {'loss': test_loss}
-    print(f"Test result on epoch {epoch}: Avg loss: {test_stat['loss']:.3f}")
-
-    return test_stat
-
-
-def generate_test_strings(model, data, tokenizer):
+def generate_test_strings(model, features, ids, tokenizer, caption_map):
     """
     Creates a mapping of model-generated captions to the image
     they describe.
@@ -110,12 +73,11 @@ def generate_test_strings(model, data, tokenizer):
 
     print("Generating Captions for each test image to prepare for metric evaluation")
     model.eval()        # Put model in evaluation mode
-    caption_map = {}    # Dictionary to use to map images to generated captions
 
     # Turn gradients off to begin testing
     with torch.no_grad():
-        for features, targets, ids in data:
-            features = features.to(device)      # Put image on GPU
+        # for features, targets, ids in data:
+            # features = features.to(device)      # Put image on GPU
 
             # Iterate over every feature and id in batch
             for feature, id in zip(features, ids):
@@ -146,6 +108,57 @@ def generate_test_strings(model, data, tokenizer):
                 pred_text = "".join(pred_text_strings)
                 caption_map[f'{id}'] = pred_text
 
+    return caption_map
+
+
+def test(model: nn.Module,
+        loss_fn: nn.modules.loss._Loss,
+        test_loader: torch.utils.data.DataLoader,
+        tokenizer,
+        batch_size=50,
+        epoch: int=0):
+    """
+    Tests a given model against a test dataset.
+    """
+
+    model.eval() # Set model to test mode
+    test_loss = 0         # Initialize total loss of test to 0
+    test_predictions = {} # List of all generations
+
+    # Begin testing
+    with torch.no_grad():     # Turn gradients off for testing
+        for images, targets, ids in test_loader:
+            # Put input data on GPU
+            images = images.to(device)
+            # Tokenize input sequence
+            tokens = tokenizer(targets, padding=True, truncation=True, return_tensors='pt')
+            token_ids = tokens['input_ids']
+            token_ids = token_ids.to(device)
+
+            expected_out = F.one_hot(token_ids[:,1:], num_classes=tokenizer.vocab_size)
+            expected_out = expected_out.contiguous()
+
+            output = model(images, token_ids, batch_size)   # Put batch through model
+            # loss = loss_fn(output.view(-1, tokenizer.vocab_size), token_ids.view(-1))   # Calculate loss
+            output = output[:,:-1].contiguous()
+            loss = loss_fn(output.transpose(1, 2).float(), expected_out.transpose(1, 2).float())   # Calculate loss
+            test_loss += loss.sum().item()
+
+            test_predictions = generate_test_strings(model, images, ids, tokenizer, test_predictions)
+
+            break   # DevOnly
+
+            
+
+    # Find average loss
+    test_loss /= (len(test_loader.dataset) / test_loader.batch_size)
+    test_stat = {'loss': test_loss, 'predictions': test_predictions}
+    print(f"Test result on epoch {epoch}: Avg loss: {test_stat['loss']:.3f}")
+
+    return test_stat
+
+
+
 
 def evaluate(generations, references):
     """
@@ -157,7 +170,16 @@ def evaluate(generations, references):
     print("Evaluating CIDEr...")
     cider_eval = Cider()
     cider_score, _ = cider_eval.compute_score(references, generations)
-    print(f"CIDEr Score: {cider_score}")
+    print("\n==============================")
+    print(f"= CIDEr Score: {cider_score} =")
+    print("==============================\n")
+
+    print("Example generations:")
+
+    i = 0
+    for gen, ref in zip(generations, references):
+        print(f"\nExpected Caption: {ref}")
+        print(f"Generated Caption: {gen}")
 
 
 def parse_args():
@@ -167,7 +189,9 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Global Enhanced Transformer')
     parser.add_argument('--exp_name', type=str, default='GET')
-    parser.add_argument('--batch_size', type=int, default=20)
+    parser.add_argument('--save_path', type=str, default="./")
+    parser.add_argument('--load_model', type=str, default=None)
+    parser.add_argument('--batch_size', type=int, default=50)
     parser.add_argument('--features_path', type=str)
     parser.add_argument('--annotation_folder', type=str, default='coco/annotations')
     args = parser.parse_args()
@@ -214,30 +238,35 @@ def main(args):
     model = GlobalEnhancedTransformer(vocab_size, 2048, 512, 64, 512, 8, 3, 0.1)
     model = model.to(device)
 
-    # Select optimizer and loss function
-    optim = Adam(model.parameters(), lr=0.01, betas=(0.9, 0.98))
-    # criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['[PAD]'])
-    criterion = nn.CrossEntropyLoss(reduction="none")
+    if args.load_model == None:
+        # Select optimizer and loss function
+        optim = Adam(model.parameters(), lr=0.01, betas=(0.9, 0.98))
+        # criterion = nn.NLLLoss(ignore_index=tokenizer.vocab['[PAD]'])
+        criterion = nn.CrossEntropyLoss(reduction="none")
 
-    # Train and test for desired number of epochs
-    max_epoch = 1
+        # Train and test for desired number of epochs
+        max_epoch = 1
+        for epoch in range(1, max_epoch+1):
+            loss = train(model, criterion, optim, train_loader, tokenizer, batch_size_train, epoch)
+
+        # Save copy of model to drive
+        print("Saving model...")
+        torch.save(model.state_dict(), f'{args.save_path}/{args.exp_name}.pth')
+    else:
+        model.load_state_dict(torch.load(args.load_model, weights_only=True))
+
     for epoch in range(1, max_epoch+1):
-        loss = train(model, criterion, optim, train_loader, tokenizer, epoch)
-        result = test(model, criterion, test_loader, tokenizer, epoch)
+        result = test(model, criterion, test_loader, tokenizer, batch_size_test, epoch)
 
-    # Save copy of model to drive
-    print("Saving model...")
-    torch.save(model.state_dict(), f'/content/drive/MyDrive/Colab Notebooks/ece570_project/{args.exp_name}.pth')
-
-    # Generate captions for test dataset and map each to an image id
-    generations = generate_test_strings(model, test_loader, tokenizer)
+    # # Generate captions for test dataset and map each to an image id
+    # generations = generate_test_strings(model, test_loader, tokenizer)
 
     # Save caption generations
-    with open('/content/drive/MyDrive/Colab Notebooks/ece570_project/generations.json', 'w') as ref_file: 
-        ref_file.write(json.dumps(generations))
+    with open(f'{args.save_path}/generations.json', 'w') as ref_file: 
+        ref_file.write(json.dumps(result['predictions']))
 
     # Evaluate model perfromance with captioning metrics
-    evaluate(generations, reference_map)
+    evaluate(result['predictions'], reference_map)
 
 
 if __name__ == "__main__":

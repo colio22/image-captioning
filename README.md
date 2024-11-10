@@ -22,7 +22,7 @@ The suggested file structure is as follows:
 |  |  |- annotations/
 ```
 
-## Run the Project
+## Train a New Model
 
 A Jupyter Notebook is included in the root level of the repository that will train and evaluate the model in a Google Colab GPU-connected runtime. Be aware that this process could take several hours.
 The only change that will have to be made to use the notebook is to update the ```--features_path``` and ```--annotation_folder``` arguments in the final cell to point to the Google Drive location 
@@ -48,3 +48,19 @@ To run the project manually, take the following steps:
                          --annotation_folder "<Path/to/annotations>" \
                          --save_path "<Permanent/file/location>"
    ```
+
+## Evaluate an Existing Model
+
+The repository contains an existing model that has already been trained at ```saved_models/GET.pth```. Training can be skipped
+and the model can be tested directly using the following command:
+
+```
+python run_project.py --batch_size 50 \
+                      --features_path "<Path/to/coco_detections.hdf5>" \
+                      --annotation_folder "<Path/to/annotations>" \
+                      --save_path "<Permanent/file/location>" \
+                      --load_model "saved_models/GET.pth"
+```
+
+Note that testing will still take a long time. This is because in addition to validating loss, the test function also generates a
+caption for every item in the test dataset (1800 in total), and this must be done in an unbatched fashion.

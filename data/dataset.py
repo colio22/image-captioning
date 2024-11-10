@@ -38,6 +38,7 @@ class COCODataset(Dataset):
         # If valid limit was given, restrict dataset to only that number of items
         if limit != 0 and limit < len(self.data):
             # Lists to hold reduced data
+            self.size = limit
             slim_data = []
             slim_targets = []
 
@@ -49,6 +50,8 @@ class COCODataset(Dataset):
             # Assign dataset to only be reduced set
             self.data = slim_data
             self.targets = slim_targets
+        else:
+            self.size = len(self.data)
 
 
     def get_ref_dict(self):
@@ -82,8 +85,7 @@ class COCODataset(Dataset):
             # of image IDs that do not have an associated entry in the feature
             # detection file.
             valid_key = False
-            while (valid_key == False) and (idx < len(self.data)):
-                print(f'In loop for {idx}')
+            while (valid_key == False) and (idx < self.size):
                 feature_id = self.data[idx]
                 try:
                     feature = f[f'{feature_id}_features'][()]

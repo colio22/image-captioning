@@ -296,6 +296,9 @@ def main(args):
     # Evaluate model perfromance with CIDEr metric
     evaluate(result['predictions'], reference_map)
 
+    # Evaluate model perfromance with captioning metrics
+    evaluate(result['predictions'], reference_map)
+
     # Save caption generations
     with open(f'{args.save_path}/generations_{args.exp_name}.json', 'w') as ref_file: 
         ref_file.write(json.dumps(result['predictions']))

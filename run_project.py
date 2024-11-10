@@ -249,12 +249,6 @@ def main(args):
     batch_size_train = args.batch_size
     batch_size_test = args.batch_size
 
-    # Create dataloaders
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size_test, shuffle=False)
-
-    print(train_loader)
-
     # Create tokenizer for input string
     # Credit to Ditria for tokenizing method used
     # (https://github.com/LukeDitria/pytorch_tutorials/blob/main/section14_transformers/solutions/Pytorch5_Transformer_Image_Captioning_Pytorch_Layers.ipynb)
@@ -270,6 +264,10 @@ def main(args):
 
     # If no model provided, proceed with training
     if args.load_model == None:
+        # Create dataloaders
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
+        print(train_loader)
+
         # Select optimizer and loss function
         # Adam parameters based on the work of Cornia et al. in the
         # M2 Transformer
@@ -289,6 +287,8 @@ def main(args):
         print("Loading model...")
         model.load_state_dict(torch.load(args.load_model, weights_only=True))
 
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size_test, shuffle=False)
+
     # Test for desired number of epochs
     print("Beginning tests...\n")
     for epoch in range(1, max_epoch+1):
@@ -296,9 +296,6 @@ def main(args):
         print("Testing complete.\n")
 
     # Evaluate model perfromance with CIDEr metric
-    evaluate(result['predictions'], reference_map)
-
-    # Evaluate model perfromance with captioning metrics
     evaluate(result['predictions'], reference_map)
 
     # Save caption generations

@@ -6,6 +6,10 @@ from model.decoder import GlobalAdaptiveDecoder
 
 
 class GlobalEnhancedTransformer(nn.Module):
+    """
+    Implementation of the entire transformer model for GET
+    """
+
     def __init__(self, vocab_size, feature_size, d_model, d_k, d_v, num_heads, num_layers, drop):
         super(GlobalEnhancedTransformer, self).__init__()
         self.vocab_size = vocab_size    # Number of words in vocabulary
@@ -23,6 +27,10 @@ class GlobalEnhancedTransformer(nn.Module):
         self.decoder = GlobalAdaptiveDecoder(vocab_size, 0, num_layers, d_model, d_k, d_v, num_heads, drop)
 
     def forward(self, img, seq, batch_size):
+        """
+        Forward pass through entire transformer
+        """
+
         # Create global feature composite of all other features
         x = torch.sum(img, dim=1)
         # Normalize by the number of non-padding feature vectors

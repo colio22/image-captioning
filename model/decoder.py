@@ -60,7 +60,7 @@ class GlobalAdaptiveDecoder(nn.Module):
         # List of decoder layers
         self.decode_layers = nn.ModuleList([DecoderLayer(d_model, d_k, d_v, num_heads, drop) for i in range(self.num_layers)])
         # Feed-forward network for output of each decoder layer
-        self.ffn = nn.Linear(d_model, vocab_size)
+        self.ffn = nn.Linear(d_model, vocab_size)   # Output as 1-hot encoding for entire vocabulary
         # Embedding layer for input sequence
         self.word_emb = nn.Embedding(vocab_size, d_model, padding_idx=padding)
 

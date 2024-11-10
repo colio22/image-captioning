@@ -109,6 +109,8 @@ def generate_test_strings(model, features, ids, tokenizer, caption_map):
                 pred_text = "".join(pred_text_strings)
                 caption_map[f'{id}'] = pred_text
 
+                print(f"Finished predicting ID {id} as {pred_text}")
+
     return caption_map
 
 

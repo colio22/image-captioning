@@ -206,7 +206,7 @@ def main(args):
     print("Image Captioning Project")
 
     number_of_train_samples = 18000
-    number_of_test_samples = int(number_of_train_samples * 0.2)
+    number_of_test_samples = int(number_of_train_samples * 0.1)
 
 
     # Create datasets from HDF file
@@ -247,28 +247,32 @@ def main(args):
         criterion = nn.CrossEntropyLoss(reduction="none")
 
         # Train and test for desired number of epochs
+        print("Starting training...\n")
         max_epoch = 1
         for epoch in range(1, max_epoch+1):
             loss = train(model, criterion, optim, train_loader, tokenizer, batch_size_train, epoch)
 
         # Save copy of model to drive
-        print("Saving model...")
+        print("Training complete. Saving model...\n")
         torch.save(model.state_dict(), f'{args.save_path}/{args.exp_name}.pth')
     else:
+        print("Loading model...")
         model.load_state_dict(torch.load(args.load_model, weights_only=True))
 
+    print("Beginning tests...\n")
     for epoch in range(1, max_epoch+1):
         result = test(model, criterion, test_loader, tokenizer, batch_size_test, epoch)
+        print("Testing complete.\n")
 
     # # Generate captions for test dataset and map each to an image id
     # generations = generate_test_strings(model, test_loader, tokenizer)
 
     # Save caption generations
-    with open(f'{args.save_path}/generations_{args.exp_name}.json', 'w') as ref_file: 
-        ref_file.write(json.dumps(result['predictions']))
+    # with open(f'{args.save_path}/generations_{args.exp_name}.json', 'w') as ref_file: 
+    #     ref_file.write(json.dumps(result['predictions']))
 
-    with open(f'{args.save_path}/references_{args.exp_name}.json', 'w') as ref_file: 
-        ref_file.write(json.dumps(reference_map))
+    # with open(f'{args.save_path}/references_{args.exp_name}.json', 'w') as ref_file: 
+    #     ref_file.write(json.dumps(reference_map))
 
     # Evaluate model perfromance with captioning metrics
     evaluate(result['predictions'], reference_map)

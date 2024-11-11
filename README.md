@@ -14,21 +14,23 @@ and store it in a place where they can easily be accessed by a machine with acce
 A zipped file containing the annotations for the extracted features must also be downloaded from [annotations.zip](https://ailb-web.ing.unimore.it/publicfiles/drive/meshed-memory-transformer/annotations.zip).
 Extract the zipped file and place them in the same location as the HDF5 feature file.
 
-The suggested file structure is as follows:
+Finally, ensure that this entire repository has been uploaded to the root level of your runtime (not inside of any other folders). The included Jupyter notebook that runs the project expects the repo to already 
+be present before it executes.
+
+The expected file tree in your runtime should look similar to the following before running the FinalProject.ipynb notebook:
 ```
-|- Google Drive
-|  |- ...
+|- drive (Google Drive mount)
+|  |- ... (path to dataset files)
 |  |  |- coco_detections.hdf5
 |  |  |- annotations/
+|- image_captioning (uploaded copy of this repo)
 ```
 
 ## Train a New Model
 
 A Jupyter Notebook is included in the root level of the repository that will train and evaluate the model in a Google Colab GPU-connected runtime. Be aware that this process could take several hours.
-The only change that will have to be made to use the notebook is to update the ```--features_path``` and ```--annotation_folder``` arguments in the final cell to point to the Google Drive location 
-where you stored the needed data files during setup.
- - **Important**: Cell 2 of the provided FinalProject.ipynb notebook attempts to clone this repository into the Google Colab runtime. Note that this step may fail when using an Anonymous GitHub link. If that occurs, simply upload this entire repo into the root
-level of the runtime (**NOT** to Google Drive). The rest of the notebook will function as intended from that point on, just don't run cell 2 again or it will delete what you have uploaded to the runtime.
+The only change that will have to be made to use the notebook is to update the ```--features_path```, ```--annotation_folder```, and ```--save_path``` arguments in cells 3 and 4 to point 
+to the Google Drive location where you stored the needed data files during setup.
 
 To run the project manually without using the provided notebook, take the following steps:
 1. Clone the project to a location where it can easily access the data files from setup.

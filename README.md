@@ -27,8 +27,10 @@ The suggested file structure is as follows:
 A Jupyter Notebook is included in the root level of the repository that will train and evaluate the model in a Google Colab GPU-connected runtime. Be aware that this process could take several hours.
 The only change that will have to be made to use the notebook is to update the ```--features_path``` and ```--annotation_folder``` arguments in the final cell to point to the Google Drive location 
 where you stored the needed data files during setup.
+ - **Important**: Cell 2 of the provided FinalProject.ipynb notebook attempts to clone this repository into the Google Colab runtime. Note that this step may fail when using an Anonymous GitHub link. If that occurs, simply upload this entire repo into the root
+level of the runtime (**NOT** to Google Drive). The rest of the notebook will function as intended.
 
-To run the project manually, take the following steps:
+To run the project manually without using the provided notebook, take the following steps:
 1. Clone the project to a location where it can easily access the data files from setup.
 2. Install the needed dependencies: ``` pip install -r requirements.txt```
 3. Run the ```run_project.py``` script. The script accepts the following arguments:

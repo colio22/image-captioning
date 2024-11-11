@@ -80,24 +80,8 @@ class COCODataset(Dataset):
 
         # Read from HDF5 file
         with h5py.File(self.detection_path, 'r') as f:
-            # Loop until finding a valid key.
-            # This failsafe measure was introduced because there are a handful
-            # of image IDs that do not have an associated entry in the feature
-            # detection file.
-            # valid_key = False
-            # while (valid_key == False) and (idx < self.size):
-                    feature_id = self.data[idx]
-                # try:
-                    feature = f[f'{feature_id}_features'][()]
-                    # valid_key = True
-                # except KeyError:    # If error encountered, skip and move to next line until valid
-                    # print(f"Failed while accessing {feature_id}. Skipping to next feature in list.")
-                    # valid_key = False
-                    # idx += 1
-# 
-                    # Wrap around
-                    # if idx >= len(self.data):
-                        # idx = 0
+                feature_id = self.data[idx]
+                feature = f[f'{feature_id}_features'][()]
 
             # Save caption of idx
         caption = self.targets[idx]

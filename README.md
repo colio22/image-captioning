@@ -63,4 +63,4 @@ python run_project.py --batch_size 50 \
 ```
 
 Note that testing will still take a long time. This is because in addition to validating loss, the test function also generates a
-caption for every item in the test dataset (1800 in total), and this must be done in an unbatched fashion.
+string caption for every item in the first two batches. After batch 0 and batch 1 complete, the process will go much faster.

@@ -74,7 +74,7 @@ def generate_test_strings(model, features, ids, tokenizer, caption_map):
         tokenizer: Automatic tokenizer object used to brek apart input sequence
     Returns a dictionary of image ids and captions generated.
 
-    Credit to Ditria for technique used to generate tokens
+    technique used to generate tokens from model output inspired by Ditria tutorial:
     (https://github.com/LukeDitria/pytorch_tutorials/blob/main/section14_transformers/solutions/Pytorch5_Transformer_Image_Captioning_Pytorch_Layers.ipynb)
     """
 
@@ -194,7 +194,7 @@ def evaluate(generations, references):
     # Print out 5 example captions and what the input was
     print("Example generations:")
     i = 0
-    for gen, ref in zip(generations, references):
+    for gen, ref in zip(generations.values(), references.values()):
         print(f"\nExpected Caption: {ref}")
         print(f"Generated Caption: {gen}")
         i += 1

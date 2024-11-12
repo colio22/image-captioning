@@ -14,8 +14,7 @@ and store it in a place where they can easily be accessed by a machine with acce
 A zipped file containing the annotations for the extracted features must also be downloaded from [annotations.zip](https://ailb-web.ing.unimore.it/publicfiles/drive/meshed-memory-transformer/annotations.zip).
 Extract the zipped file and place them in the same location as the HDF5 feature file.
 
-Finally, ensure that this entire repository has been uploaded to the root level of your runtime (not inside of any other folders). The included Jupyter notebook that runs the project expects the repo to already 
-be present before it executes.
+Finally, ensure that this entire repository has been uploaded to the root level of your runtime (not inside of any other folders). The included Jupyter notebook that runs the project expects the repo to already be present before it executes.
 
 The expected file tree in your runtime should look similar to the following before running the FinalProject.ipynb notebook:
 ```
@@ -23,7 +22,7 @@ The expected file tree in your runtime should look similar to the following befo
 |  |- ... (path to dataset files)
 |  |  |- coco_detections.hdf5
 |  |  |- annotations/
-|- image_captioning (uploaded copy of this repo)
+|- image_captioning-6BC3.zip (uploaded copy of this repo)
 ```
 
 ## Train a New Model

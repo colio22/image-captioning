@@ -9,7 +9,14 @@ This project depends on external dataset files being present on the local machin
 Instead, previously extracted features from the well-known COCO dataset are used. These pre-extracted features are provided at https://github.com/aimagelab/meshed-memory-transformer.
 
 Before running the code, download the 53 GB HDF5 file containing the features from [coco_detections.hdf5](https://ailb-web.ing.unimore.it/publicfiles/drive/show-control-and-tell/coco_detections.hdf5) 
-and store it in a place where they can easily be accessed by a machine with access to GPU. Placing the file on Google Drive is highly recommended so that Google Colab can be used in conjunction.
+and store it in a place where they can easily be accessed by a machine with access to GPU. Placing the file on Google Drive is highly recommended so that Google Colab can be used in conjunction. If the file will be placed on Google Drive, the most time efficient way would be to copy it directly to your Google account
+from a publically available Google Drive file. To take advantage of this option, take the following steps:
+  1. Go to [the public HDF5 file](https://drive.google.com/file/d/1nsw3SqotMwjMiTQlbiFULPEcGxqg2xEZ/view?usp=sharing)
+  2. Click the three ellipsis next to the file name
+  3. Select "Make a Copy"
+  4. Copy the file to an easily accessible location on your Google Drive.
+
+This process will save time by eliminating the need to upload the HDF5 file after downloading it. Instead, it will download directly to your Google Drive.
 
 A zipped file containing the annotations for the extracted features must also be downloaded from [annotations.zip](https://ailb-web.ing.unimore.it/publicfiles/drive/meshed-memory-transformer/annotations.zip).
 Extract the zipped file and place them in the same location as the HDF5 feature file.
